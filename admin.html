@@ -142,10 +142,7 @@ const SHIP_DEF={carriers:[{id:'indo',name:'Indoshipping',show:true},{id:'dhl',na
 const TARIF_DEF=[[0.5,454000,300000],[1,454000,300000],[2,390000,260000],[5,355000,235000],[10,320000,210000],[20,285000,190000],[30,260000,170000],[50,235000,155000],[999,215000,140000]];
 const KOMB_KEYS={softpouch:['model','material','tali','sise','finishing'],hardbox:['model','construction','finishing','sisi','ukuran'],softbox:['model','construction','finishing','ukuran'],cards:['material','coat','finishing','cut','sise']};
 const KOMB_LABEL={softpouch:'Soft Pouch',hardbox:'Hard Box',softbox:'Soft Box',cards:'Thank You Card'};
-const QUOTES_SAMPLE=[
- {ts:'2026-06-26 14:32',enq:'ENQ0020',client:'David & Flo',total:6277500,ship:'Indoshipping Economy',shipTotal:1155000,grand:7432500,items:2},
- {ts:'2026-06-25 10:05',enq:'ENQ0019',client:'Botanique Hotel',total:14350000,ship:'Sea Freight LCL',shipTotal:5412000,grand:19762000,items:4}
-];
+const QUOTES_SAMPLE=[];   /* real quotes are fetched live from the Sheet via loadQuotes() */
 
 /* Berat produk (gram) dari live sheet "Database Product" — rove_data.js belum memuat kolom ini,
    jadi disemai di sini; versi sungguhan membacanya langsung dari Sheet via backend */
@@ -211,7 +208,7 @@ function doLogin(){
   if(j&&j.ok===false){ localStorage.removeItem(LS_ATOK); document.getElementById('pw').value=''; throw new Error((j.error||'Passcode salah')+' — masukkan lagi.'); }
   if(!j||!j.products)throw new Error('Data kosong');
   window.__ATOKEN=pw; localStorage.setItem(LS_ATOK,pw);
-  applyServer(j); enter();
+  applyServer(j); enter(); loadQuotes();
  }).catch(function(e){loginMsg((''+e.message).slice(0,90));});
 }
 function enter(){document.getElementById('login').style.display='none';document.getElementById('app').classList.add('in');render();}
@@ -387,13 +384,21 @@ function saveCfg(){Object.keys(S.config).forEach(k=>{const el=document.getElemen
 
 /* ── QUOTES LOG ── */
 function quotesUI(){
- return `<div class="note">Versi sungguhan: halaman ini membaca tab <b>Quotes Summary</b> di Google Sheet — terisi otomatis setiap tim sales meng-Export PDF di Cost Estimator. Di prototype ini isinya contoh.</div>
+ return `<div class="note">Dibaca langsung dari tab <b>Quotes Summary</b> di Google Sheet — terisi otomatis tiap tim sales Export PDF di Cost Estimator. <a href="#" onclick="loadQuotes(true);return false" style="color:#4f46e5;font-weight:600">↻ Muat ulang</a></div>
   <div class="card" style="padding:6px 14px 14px;overflow-x:auto">
-  <table><thead><tr><th>Waktu</th><th>Enquiry</th><th>Client</th><th>Total Produk</th><th>Shipping</th><th>Grand Total</th><th>Item</th></tr></thead><tbody>
+  ${S.quotes.length ? `<table><thead><tr><th>Waktu</th><th>Enquiry</th><th>Client</th><th>Total Produk</th><th>Shipping</th><th>Grand Total</th><th>Item</th></tr></thead><tbody>
   ${S.quotes.map(q=>`<tr><td style="font-size:12px;color:var(--tx2)">${esc(q.ts)}</td><td><b>${esc(q.enq)}</b></td><td>${esc(q.client)}</td>
    <td class="mono">${rp(q.total)}</td><td>${esc(q.ship)}<div style="font-size:11px;color:var(--tx3)">${rp(q.shipTotal)}</div></td>
    <td class="mono"><b>${rp(q.grand)}</b></td><td>${q.items}</td></tr>`).join('')}
-  </tbody></table></div>`;
+  </tbody></table>` : `<div style="padding:26px;text-align:center;color:var(--tx3);font-size:13px">Belum ada quote. Baris muncul di sini setiap tim sales meng-Export PDF di Cost Estimator.</div>`}
+  </div>`;
+}
+function loadQuotes(show){
+ var tok=window.__ATOKEN||localStorage.getItem(LS_ATOK)||'';if(!tok)return;
+ fetch(BACKEND_URL+'?t='+encodeURIComponent(tok)+'&quotes=1').then(function(r){return r.json();}).then(function(j){
+  if(j&&j.quotes){ S.quotes=j.quotes; render(); if(show)toast('Quotes dimuat ('+j.quotes.length+')'); }
+  else if(show)toast('Belum bisa memuat quotes (redeploy backend dulu).');
+ }).catch(function(){ if(show)toast('Gagal memuat quotes.'); });
 }
 
 /* ── SERVICE ── */
