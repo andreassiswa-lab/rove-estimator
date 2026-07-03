@@ -1039,7 +1039,7 @@ function buildDB(r){
     products:(r.products||[]).map(function(p){var o=Object.assign({},p,pe[p.hq]||{});if(stdRef[p.hq])o.stdRef=stdRef[p.hq];return o;}),
     softpouch:r.softpouch||[], hardbox:r.hardbox||[], softbox:r.softbox||[], cards:r.cards||[],
     services:(r.services||[]).map(function(s){var o=Object.assign({},s);if(ppt[s.name])o.perPcTiers=ppt[s.name];return o;}),
-    collateral:S.collateral||[], mat:S.mat||{}, giftsets:ex.giftsets||{}, meta:S.meta||{}
+    collateral:(r.collateral&&r.collateral.length)?r.collateral:(S.collateral||[]), mat:S.mat||{}, giftsets:ex.giftsets||{}, meta:S.meta||{}
   };
 }
 function boot(){

@@ -195,6 +195,7 @@ function applyServer(resp){
  if(resp.softpouch)DB.softpouch=resp.softpouch; if(resp.hardbox)DB.hardbox=resp.hardbox;
  if(resp.softbox)DB.softbox=resp.softbox; if(resp.cards)DB.cards=resp.cards;
  if(resp.services)DB.services=resp.services;
+ if(resp.collateral&&resp.collateral.length)DB.collateral=resp.collateral;
  S=freshState();
  if(resp.config){
   ['USD_IDR','AUD_IDR','WG_SOFT_POUCH','WG_HARDBOX','WG_SOFTBOX','WG_THANKYOU_CARD'].forEach(function(k){if(resp.config[k]!=null)S.config[k]=resp.config[k];});
@@ -223,6 +224,7 @@ function publishAll(){
   ['Products',{action:'saveProducts',rows:S.products}],
   ['Packaging & Card',{action:'saveKombinasi',data:{softpouch:S.softpouch,hardbox:S.hardbox,softbox:S.softbox,cards:S.cards}}],
   ['Service',{action:'saveServices',rows:S.services}],
+  ['Foto Varian',{action:'saveCollateral',rows:S.collateral}],
   ['Config & Shipping',{action:'saveConfig',config:Object.assign({},S.config,{shipping:S.shipping})}]
  ];
  var pr=admProg('Publish 0/'+jobs.length);
