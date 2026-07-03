@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rove — Cost Estimator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+ --green:#233a2c;--green2:#2f4d3a;--green3:#3f6b4a;--green4:#2d6a4f;--green-bg:#e6f1ea;
+ --gold:#c8a96e;--gold2:#e8c98e;
+ --cream:#f6f2ea;--cream2:#ece5d8;--cream3:#e0d8c8;--white:#fff;
+ --red:#9b2226;--amber:#7f5000;--amber-bg:#fff0cc;--text:#241c12;--text2:#4f4534;--text3:#8a8170;
+ --radius:13px;--shadow:0 4px 22px rgba(35,40,30,.10);
+ --c-client:#4a5a3a;--c-leather:#25342a;--c-pack:#5a3a26;--c-cards:#6b4327;--c-ship:#24527a;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);-webkit-font-smoothing:antialiased}
+.header{background:var(--green);padding:22px 34px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-60px;right:-40px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(200,169,110,.16),transparent 70%)}
+.header-in{max-width:1280px;margin:0 auto;position:relative}
+.eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.header h1{font-family:'DM Serif Display',serif;font-size:25px;color:#fff;line-height:1.1}
+.header h1 em{color:var(--gold2);font-style:normal}
+.header-sub{font-size:12.5px;color:rgba(255,255,255,.5);margin-top:6px}
+.wrap{max-width:1280px;margin:0 auto;padding:20px 20px 80px;display:grid;grid-template-columns:1fr 400px;gap:18px;align-items:start}
+@media(max-width:980px){.wrap{grid-template-columns:1fr}}
+.panel{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:6px}
+.tab{padding:9px 15px;border-radius:9px 9px 0 0;border:1.5px solid transparent;background:var(--cream2);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer}
+.tab.active{color:#fff}
+.sec-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--green3);display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.sec-label::after{content:'';flex:1;height:1px;background:var(--cream2)}
+.search{width:100%;height:42px;padding:0 14px;border:1.5px solid var(--cream2);border-radius:9px;background:var(--cream);font-size:14px;font-family:inherit;outline:none;margin-bottom:12px}
+.search:focus{border-color:var(--green3);background:#fff}
+.cat-group{margin-bottom:6px}
+.cat-head{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:8px 2px 4px}
+.prod-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.prod-row:hover{background:var(--cream)}
+.prod-row.active{background:var(--green-bg);border-color:#bfe0cd}
+.prod-left{display:flex;align-items:center;gap:10px;min-width:0}
+.pthumb{width:42px;height:42px;border-radius:7px;object-fit:cover;flex-shrink:0;background:var(--cream2)}
+.prod-name{font-size:13.5px;font-weight:600;color:var(--text)}
+.prod-alt{font-size:11px;color:var(--text3);margin-top:1px}
+.prod-price{font-family:'DM Mono',monospace;font-size:12.5px;color:var(--green);white-space:nowrap}
+.prod-list{max-height:300px;overflow-y:auto;padding-right:4px}
+.pimg{width:100%;height:250px;object-fit:contain;border-radius:11px;margin-bottom:8px;background:#20302a;cursor:zoom-in}
+.kimg{width:100%;height:210px;object-fit:contain;border-radius:11px;margin-bottom:8px;background:#20302a;cursor:zoom-in}
+.gallery{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.gthumb{width:46px;height:46px;border-radius:6px;object-fit:cover;cursor:pointer;border:2px solid transparent;background:var(--cream2)}
+.gthumb.active{border-color:var(--green3)}
+.lightbox{position:fixed;inset:0;background:rgba(20,24,18,.92);display:flex;align-items:center;justify-content:center;z-index:999;cursor:zoom-out;padding:24px}
+.lightbox img{max-width:94%;max-height:94%;border-radius:8px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.lightbox .lb-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);color:#fff;border:none;width:46px;height:64px;font-size:26px;cursor:pointer;border-radius:8px}
+.lightbox .lb-prev{left:16px}.lightbox .lb-next{right:16px}
+.specline{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.5}
+.specline b{color:var(--text)}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field label{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.02em}
+.field label .hint{font-weight:400;color:var(--text3)}
+.field select,.field input,.field textarea{padding:9px 11px;border:1.5px solid var(--cream2);border-radius:9px;background:var(--cream);font-size:13.5px;font-family:inherit;color:var(--text);outline:none;-webkit-appearance:none;appearance:none}
+.field input[type=checkbox]{appearance:auto;-webkit-appearance:auto;accent-color:var(--green4);width:17px;height:17px;cursor:pointer;padding:0}
+.field select,.field input{height:40px}
+.field textarea{min-height:48px;resize:vertical}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8170' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:28px}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green3);background:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tiers{display:flex;gap:6px;flex-wrap:wrap}
+.tier{padding:7px 8px;border:1.5px solid var(--cream2);border-radius:9px;background:var(--cream);cursor:pointer;text-align:center;min-width:58px}
+.tier.active{background:var(--green);border-color:var(--green);color:#fff}
+.tier .tq{font-size:10px;color:var(--text3)}
+.tier.active .tq{color:var(--gold2)}
+.tier .tp{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;margin-top:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{padding:7px 11px;border:1.5px solid var(--cream2);border-radius:8px;background:var(--cream);font-size:12px;color:var(--text2);cursor:pointer;user-select:none}
+.chip .d{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text3);margin-left:4px}
+.chip.active{background:var(--green);border-color:var(--green);color:#fff}
+.chip.active .d{color:var(--gold2)}
+.chip.svc.active{background:var(--green4);border-color:var(--green4);color:#fff}
+.chip.svc.active .d{color:#bff0d8}
+.livebar{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--cream);border:1.5px dashed var(--cream3);border-radius:11px;padding:13px 16px;margin-top:14px}
+.live-l{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.live-v{font-family:'DM Mono',monospace;font-size:21px;font-weight:600;color:var(--green)}
+.live-s{font-size:11px;color:var(--text3);margin-top:2px}
+.btn{height:46px;padding:0 22px;border:none;border-radius:10px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-gold{background:var(--gold);color:#3a2a10;box-shadow:0 4px 13px rgba(200,169,110,.34)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-ghost{background:var(--cream);color:var(--text2);border:1.5px solid var(--cream2);height:38px;font-size:12.5px;padding:0 14px;border-radius:9px;cursor:pointer}
+.btn-ghost:hover{border-color:var(--green3);color:var(--green)}
+.incl{margin-top:10px;font-size:11.5px;color:var(--text3);line-height:1.7;background:var(--cream);border-radius:9px;padding:10px 13px}
+.incl .l{display:flex;justify-content:space-between;gap:10px}
+.incl .mono{font-family:'DM Mono',monospace}
+.est-tag{display:inline-block;font-size:9px;padding:1px 6px;border-radius:5px;background:var(--amber-bg);color:var(--amber);font-weight:600;vertical-align:middle;margin-left:5px}
+.note-sm{font-size:10.5px;color:var(--text3);margin-top:6px;line-height:1.5}
+.stepper{display:flex;gap:8px;align-items:center}
+.stepper button{width:34px;height:34px;border-radius:8px;border:1.5px solid var(--cream3);background:var(--cream2);color:var(--text);font-size:18px;line-height:1;cursor:pointer}
+.stepper button:hover{border-color:var(--gold)}
+.stepper input{width:74px;text-align:center}
+.stepper button:disabled{opacity:.35;cursor:not-allowed}
+.slotrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.slotlab{font-size:12.5px;color:var(--text2)}
+.cklist{display:flex;flex-direction:column;gap:7px;margin-top:3px}
+.ck{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text2);cursor:pointer;padding:7px 10px;border:1.5px solid var(--cream2);border-radius:9px;transition:background .12s,border-color .12s}
+.ck:hover{border-color:var(--cream3)}
+.ck input{appearance:auto;-webkit-appearance:auto;accent-color:var(--green4);width:17px;height:17px;margin:0;flex:none;cursor:pointer}
+.ck:has(input:checked){background:var(--green-bg);border-color:var(--green3);color:var(--green);font-weight:600}
+.ck:has(input:checked) .nm{text-decoration:line-through;text-decoration-color:var(--green3)}
+.dp{position:relative}
+.dp .dp-inp{cursor:pointer}
+.dp-cal{position:absolute;right:11px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:14px;opacity:.65}
+.dp-pop{position:absolute;z-index:60;top:44px;left:0;background:#fff;border:1.5px solid var(--cream3);border-radius:11px;box-shadow:var(--shadow);padding:10px;width:248px}
+.dp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.dp-head button{width:28px;height:28px;border:none;background:var(--cream2);border-radius:7px;cursor:pointer;font-size:16px;color:var(--text)}
+.dp-head button:hover{background:var(--cream3)}
+.dp-title{font-weight:600;font-size:13px;color:var(--text)}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.dp-wd{font-size:10px;color:var(--text3);text-align:center;padding:3px 0;font-weight:700}
+.dp-cell{text-align:center;padding:6px 0;font-size:12.5px;border-radius:6px;cursor:pointer;color:var(--text2)}
+.dp-cell:hover:not(.empty){background:var(--green-bg)}
+.dp-cell.today{outline:1.5px solid var(--gold)}
+.dp-cell.sel{background:var(--green4);color:#fff;font-weight:600}
+.dp-cell.empty{cursor:default}
+.dp-foot{display:flex;justify-content:space-between;margin-top:8px;border-top:1px solid var(--cream2);padding-top:7px}
+.dp-foot button{border:none;background:none;color:var(--green4);font-size:11.5px;font-weight:600;cursor:pointer}
+.locknote{font-size:11px;color:var(--text3);background:var(--cream);border-radius:8px;padding:7px 11px;margin-bottom:12px}
+.order{position:sticky;top:14px}
+.client-line{font-size:12px;color:var(--text2);background:var(--cream);border-radius:9px;padding:8px 12px;margin-bottom:12px;line-height:1.5}
+.client-line b{color:var(--text)}
+.order-empty{text-align:center;padding:30px 16px;color:var(--text3)}
+.order-empty .i{font-size:30px;margin-bottom:8px}
+.otable{width:100%;border-collapse:collapse;font-size:12px}
+.otable th{text-align:right;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);padding:6px 6px;border-bottom:1.5px solid var(--cream2)}
+.otable th:first-child{text-align:left}
+.otable td{padding:8px 6px;border-bottom:1px solid var(--cream2);text-align:right;vertical-align:top}
+.otable td:first-child{text-align:left}
+.oi-name{font-size:12.5px;font-weight:600;color:var(--text)}
+.oi-cat{display:inline-block;font-size:8.5px;padding:1px 5px;border-radius:4px;color:#fff;margin-left:4px;vertical-align:middle}
+.oi-spec{font-size:10.5px;color:var(--text3);margin-top:1px;line-height:1.4}
+.oi-qty{width:54px;height:30px;border:1.5px solid var(--cream2);border-radius:6px;background:var(--cream);font-family:'DM Mono',monospace;font-size:12px;text-align:center;outline:none}
+.mono{font-family:'DM Mono',monospace}
+.oi-x{background:rgba(155,34,38,.08);border:none;color:var(--red);width:20px;height:20px;border-radius:5px;cursor:pointer;font-size:11px}
+.oi-x:hover{background:rgba(155,34,38,.18)}
+.tot{margin-top:12px}
+.tot-row.grand{display:flex;justify-content:space-between;align-items:baseline;font-size:18px;font-weight:700;color:var(--green4);border-top:1.5px solid var(--cream2);padding-top:12px;margin-top:6px}
+.tot-row.grand .mono{font-family:'DM Mono',monospace}
+.confirm-note{background:var(--green-bg);border:1px solid #bfe0cd;border-radius:9px;padding:9px 12px;font-size:11.5px;color:var(--green4);margin-top:10px;line-height:1.5}
+.order-acts{display:flex;gap:7px;margin-top:14px}
+.muted{font-size:11px;color:var(--text3);line-height:1.6}
+
+/* ── shipping tab ── */
+.ptp-note{background:var(--green-bg);border:1px solid #bfe0cd;border-radius:9px;padding:9px 12px;font-size:11.5px;color:var(--green4);margin-bottom:12px;line-height:1.5}
+.ship-tbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+.ship-tbl th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text3);padding:6px 6px;border-bottom:1.5px solid var(--cream2)}
+.ship-tbl td{padding:7px 6px;border-bottom:1px solid var(--cream2);vertical-align:middle}
+.ship-w{width:72px;height:32px;border:1.5px solid var(--cream2);border-radius:6px;background:var(--cream);font-family:'DM Mono',monospace;font-size:12px;text-align:center;outline:none}
+.ship-w:focus{border-color:var(--green3);background:#fff}
+.ship-w.missing{border-color:#d99000;background:var(--amber-bg)}
+.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:13px}
+@media(max-width:600px){.wgrid{grid-template-columns:1fr 1fr}}
+.wcard{background:var(--cream);border:1.5px solid var(--cream2);border-radius:10px;padding:11px}
+.wcard.primary{border-color:var(--green3);background:var(--green-bg)}
+.wcard-l{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.wcard-v{font-size:17px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace}
+.wcard-v span{font-size:11px;font-weight:400;font-family:'DM Sans',sans-serif}
+.wcard-s{font-size:10px;color:var(--text3);margin-top:3px}
+.ship-carrier{background:var(--white);border:1.5px solid var(--cream2);border-radius:11px;overflow:hidden;margin-bottom:10px}
+.ship-chead{background:var(--green);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.ship-cname{font-size:13px;font-weight:600;color:#fff}
+.ship-cname span{font-weight:400;font-size:11px;color:rgba(255,255,255,.55)}
+.ship-badge{font-size:9px;padding:2px 8px;border-radius:10px;font-family:'DM Mono',monospace;background:rgba(200,169,110,.25);color:var(--gold2)}
+.ship-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--cream2);gap:10px}
+.ship-row:last-child{border-bottom:none}
+.ship-row.cheapest{background:var(--green-bg)}
+.ship-sname{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tag-cheap{font-size:9px;background:var(--green4);color:#fff;padding:1px 7px;border-radius:9px;font-weight:600}
+.ship-smeta{font-size:11px;color:var(--text3);margin-top:2px}
+.ship-price{text-align:right;flex-shrink:0}
+.ship-tot{font-size:15px;font-weight:700;color:var(--green);font-family:'DM Mono',monospace;white-space:nowrap}
+.ship-tot.best{color:var(--green4)}
+.ship-pu{font-size:11px;color:var(--text3);margin-top:1px}
+.sea-card{background:var(--green-bg);border:1.5px solid #bfe0cd;border-radius:11px;padding:14px;margin-bottom:10px}
+.sea-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sea-title{font-size:13.5px;font-weight:600;color:var(--green4);display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.sea-title span.ptp{font-weight:400;font-size:11px;color:var(--green3)}
+.sea-sub{font-size:11px;color:var(--green3);margin-top:2px}
+.sea-body{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sea-fwd{font-size:12px;font-weight:600;color:var(--green4)}
+.sea-fwdn{font-size:10px;color:var(--green3);margin-top:2px}
+.sea-pr{font-size:16px;font-weight:700;color:var(--green4);font-family:'DM Mono',monospace}
+.sea-pru{font-size:10px;color:var(--green3);margin-top:1px;text-align:right}
+.sea-sav{margin-top:10px;padding-top:10px;border-top:1px solid #bfe0cd;font-size:11px;color:var(--green4)}
+.vol-alert{border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:12px;line-height:1.6;display:flex;gap:9px;align-items:flex-start}
+.vol-alert.extreme{background:#fde8e8;color:var(--red);border-left:3px solid var(--red)}
+.vol-alert.high{background:var(--amber-bg);color:var(--amber);border-left:3px solid #d99000}
+
+/* phone tuning — placed last so it overrides base rules */
+@media(max-width:600px){
+ .header{padding:15px 16px}
+ .wrap{padding:13px 12px 70px}
+ .two{grid-template-columns:1fr}
+ .tab{padding:8px 12px;font-size:12.5px}
+ .dp-pop{width:min(248px,90vw)}
+ .tier{min-width:52px;flex:1 0 auto}
+ .pimg,.kimg{max-height:320px}
+ .otable th,.otable td{font-size:11px;padding:7px 5px}
+}
+.cur-ctrl{display:inline-flex;align-items:center;gap:9px;margin-top:14px;flex-wrap:wrap}
+.cur-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.cur-btn{background:var(--gold);color:#3a2a10;border:none;border-radius:8px;padding:7px 16px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+.cur-btn:hover{background:var(--gold2)}
+.cur-rate{font-size:11px;color:rgba(255,255,255,.55)}
+.cur-inp{width:74px;height:30px;border:1.5px solid rgba(255,255,255,.18);border-radius:7px;background:rgba(255,255,255,.08);color:#fff;text-align:center;font-family:'DM Mono',monospace;font-size:12px;outline:none}
+.cur-inp:focus{border-color:var(--gold)}
+.oship{border:1.5px solid var(--cream2);border-radius:10px;overflow:hidden;margin:4px 0 6px}
+.oship-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid var(--cream2);font-size:12.5px}
+.oship-row:last-child{border-bottom:none}
+.oship-row.best{background:var(--green-bg)}
+.oship-n{color:var(--text2)}
+.oship-p{font-family:'DM Mono',monospace;text-align:right;white-space:nowrap;color:var(--green);font-weight:600}
+.oship-p span{display:block;font-size:10px;color:var(--text3);font-weight:400}
+</style>
+</head>
+<body>
+<div class="header">
+ <div class="header-in">
+  <div class="eyebrow">Rove · Internal Costing Tool</div>
+  <h1>Cost <em>Estimator</em></h1>
+  <div class="header-sub">Quick cost estimate for products, packaging &amp; cards — to be confirmed by the Project Manager before quoting.</div>
+  <div class="cur-ctrl">
+   <span class="cur-lbl">Currency</span>
+   <button id="curBtn" class="cur-btn" onclick="toggleCur()">Rp IDR</button>
+   <span class="cur-rate">A$ 1 = Rp <input id="audRate" class="cur-inp" type="number" min="1" step="1" value="10800" onchange="setAudRate(this.value)"></span>
+  </div>
+ </div>
+</div>
+
+<div class="wrap">
+ <div><div class="panel"><div class="tabs" id="tabs"></div><div id="tabBody"></div></div></div>
+ <div><div class="panel order">
+   <div class="sec-label">ORDER LIST <span id="ordCount" style="font-family:'DM Sans';letter-spacing:0;text-transform:none;color:var(--text3)"></span></div>
+   <div id="orderArea"></div>
+ </div></div>
+</div>
+
+<script>window.ROVE_STATIC={"meta":{"productTiers":["1-12","13-49","50-99","100-199","200-299","300-499","500+"],"productTierQty":[6,30,75,150,250,400,600],"packTiers":["1-50","51-100","101-200","201-300","301-500","501+"],"packTierQty":[25,75,150,250,400,600],"softboxMOQ":500},"mat":{"leatherCm2":36.99,"fauxCm2":7.66},"giftsets":{"Tray Set for Hucraft":[{"name":"Tray S","t":[null,null,145200,143000,null,140800,138600],"est":false},{"name":"Tray M","t":[null,null,176000,173800,null,171600,169400],"est":false},{"name":"Tray L","t":[null,null,221100,218900,null,216700,214500],"est":false}],"Gift Set for Honda CR-V":[{"name":"Alkmaar Keychain","t":[94600,62500,39000,35000,32500,30000,26000],"est":false},{"name":"Holt Smart Wallet","t":[null,null,92400,90200,null,88000,85800],"est":false},{"name":"Gale Key Wallet","t":[229000,174500,109000,105000,102000,99000,95000],"est":false},{"name":"Folded Bag","t":[115500,88000,55000,50000,47500,45000,40000],"est":true}],"Gift Set for Lightfoot":[{"name":"London Travel Wallet","t":[628000,478500,299000,295000,292500,290000,285000],"est":false},{"name":"Dominica Luggage Tag","t":[null,null,105600,103400,null,101200,99000],"est":false},{"name":"Canvas Tote Bag","t":[115500,88000,55000,50000,47500,45000,40000],"est":true}],"Gift Set for Styloz x Rove Gift":[{"name":"Tote Bag (Canvas + Leather Strap)","t":[220500,168000,105000,100000,97500,95000,90000],"est":true},{"name":"Hexagonal Keychain","t":[null,null,20900,18700,null,16500,14300],"est":false},{"name":"Iksan Card Wallet","t":[151000,115000,72000,67000,65000,63000,57000],"est":true},{"name":"Circle Bag Charm","t":[null,null,30800,28600,null,26400,24200],"est":false},{"name":"Alkmaar Keychain","t":[94600,62500,39000,35000,32500,30000,26000],"est":false}]},"collateral":[{"type":"Soft Pouch","kind":"Feature","value":"Standard Drawstring","photo":"https://drive.google.com/file/d/18yMwa-5MGQfKFQGXVbC4gIwZTANWgjOk/view?usp=sharing"},{"type":"Soft Pouch","kind":"Feature","value":"Ruffles Drawstring","photo":"https://drive.google.com/file/d/1ImVb5PTLzCBvMoVnN5ZUtmZOr1pjq5Ef/view?usp=sharing"},{"type":"Soft Pouch","kind":"Feature","value":"Envelope","photo":"https://drive.google.com/file/d/1bOcxAJA8cbd8sDbtQ2VHQKhLXavEXyB7/view?usp=sharing"},{"type":"Soft Pouch","kind":"Feature","value":"Envelope with Overlock Stitching","photo":"https://drive.google.com/file/d/1M5b7bfIl2KyZa7yYt1P7seFGaFMWsHoQ/view?usp=sharing"},{"type":"Hardbox","kind":"Feature","value":"Top Bottom - Standard","photo":"https://drive.google.com/file/d/1GAPUFOItQ0r3aB1tHCXWkJIJYfDO8P5-/view?usp=sharing"},{"type":"Hardbox","kind":"Feature","value":"Sliding - Standard","photo":"https://drive.google.com/file/d/1pNPJ23uK3vENJ0uknsXE0_b4OXdUzGRp/view?usp=sharing"},{"type":"Hardbox","kind":"Feature","value":"Magnet - Standard","photo":"https://drive.google.com/file/d/1c5ujMbooYxatVBlcc1Kdo7rNFJh3z4Tb/view?usp=sharing"},{"type":"Hardbox","kind":"Feature","value":"Magnet - Collapsable","photo":"https://drive.google.com/file/d/1869wjWwODgnV8KLQhZoivBcU3llmcLr5/view?usp=sharing"},{"type":"Softbox","kind":"Feature","value":"Top Bottom - Standard","photo":"https://drive.google.com/file/d/1oSAO5OA4clOegI52PDM4rpUSdXCf2ff3/view?usp=sharing"},{"type":"Softbox","kind":"Feature","value":"Sliding - Standard","photo":"https://drive.google.com/file/d/1TD1JtpyDaoyabRC3wv3YECSCIr-C3P56/view?usp=sharing"},{"type":"Softbox","kind":"Feature","value":"Tuck End Box - Standard","photo":"https://drive.google.com/file/d/1Bx5fCqenHQOpp4FQfiTppFCA_bEL_6Q7/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Calico","photo":"https://drive.google.com/file/d/1XigEiIamkBOjL-wXH2R-ZpFhL9ICjmeZ/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Satin","photo":"https://drive.google.com/file/d/1vFgaSkFsrUdnPljKlUGZN95MQHdBxvKg/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Drill","photo":"https://drive.google.com/file/d/1q9xkBPyafYe_Pdkivel0ltpJSLH40vVq/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Canvas","photo":"https://drive.google.com/file/d/1dbvmrMxjDH3OS2sepub4V8q-VtN-AZ8c/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Velvet","photo":"https://drive.google.com/file/d/1Da-_Yozrhq7_XLE_IAVzJKbA6ZpCu9ia/view?usp=sharing"},{"type":"Thank You Card","kind":"Material","value":"Brief Card","photo":"https://drive.google.com/file/d/1U7Q1CL-fsbSWwcP7s6YsxkP0vEiHlJNp/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Blush White","photo":"https://drive.google.com/file/d/1U7Q1CL-fsbSWwcP7s6YsxkP0vEiHlJNp/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Ivory","photo":"https://drive.google.com/file/d/11DShv7JLhvcgd4XHujhsqLisx2lcmFNi/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Art Paper","photo":"https://drive.google.com/file/d/10y_-wgUt54ICOUOET7rzMVB0yzfYccaq/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Craft Paper","photo":"https://drive.google.com/file/d/1IQiZCIGq-3oG_P941vkRT5MHUGM3E01R/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Recycled Paper","photo":"https://drive.google.com/file/d/1ZYE4hmc5H1dpmytsMkXUOilNp0BSBHe-/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Premium Paper","photo":"https://drive.google.com/file/d/1_WHDsSGe_yvqvi2_2cYDMUnXms7Io2S8/view?usp=sharing"},{"type":"Soft Pouch","kind":"Tali","value":"Tali katun","photo":"https://drive.google.com/file/d/1r-iBwODGAo9dDrrxnL1BPzm1yAK2cuA9/view?usp=sharing"},{"type":"Soft Pouch","kind":"Tali","value":"Tali Gross Grain","photo":"https://drive.google.com/file/d/1yzXVHlFEMFqiBsTGo1pKwyLIt2HS8EhI/view?usp=sharing"},{"type":"Soft Pouch","kind":"Tali","value":"Tali Velvet","photo":"https://drive.google.com/file/d/18yMwa-5MGQfKFQGXVbC4gIwZTANWgjOk/view?usp=sharing"},{"type":"Soft Pouch","kind":"Finishing","value":"Polos","photo":"https://drive.google.com/file/d/1XigEiIamkBOjL-wXH2R-ZpFhL9ICjmeZ/view?usp=sharing"},{"type":"Soft Pouch","kind":"Finishing","value":"Print","photo":"https://drive.google.com/file/d/1hKCkPNA-q6y9lqW-K2kep8C8Q4uGhtp_/view?usp=sharing"},{"type":"Soft Pouch","kind":"Finishing","value":"Bordir","photo":"https://drive.google.com/file/d/1ImVb5PTLzCBvMoVnN5ZUtmZOr1pjq5Ef/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"Print","photo":"https://drive.google.com/file/d/1GAPUFOItQ0r3aB1tHCXWkJIJYfDO8P5-/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"Hotprint","photo":"https://drive.google.com/file/d/1q2zbv1w9KSb41HShBIw_ajJ7AWQ0Ed85/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"UV Print","photo":"https://drive.google.com/file/d/1zNGqsKxQM-eLntgeZDMWEsQjxporqG_9/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"Sablon","photo":"https://drive.google.com/file/d/13lHMrstVQkxrxeYHtl0r53fbGccMovsP/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"Debossed","photo":"https://drive.google.com/file/d/1i1lC7tFrS5tDRfbCo5j0lnigcywCVjhT/view?usp=sharing"},{"type":"Softbox","kind":"Finishing","value":"Print","photo":"https://drive.google.com/file/d/1TD1JtpyDaoyabRC3wv3YECSCIr-C3P56/view?usp=sharing"},{"type":"Softbox","kind":"Finishing","value":"Hotprint","photo":"https://drive.google.com/file/d/1oSAO5OA4clOegI52PDM4rpUSdXCf2ff3/view?usp=sharing"},{"type":"Softbox","kind":"Finishing","value":"UV Print","photo":"https://drive.google.com/file/d/1LnHNTUcebcT-5295KjOrpLNelFdAcENe/view?usp=sharing"},{"type":"Thank You Card","kind":"Finishing","value":"Debossed - Uncoated","photo":"https://drive.google.com/file/d/11lS8GikfZ0N_g4qtkxecuBGZBYkR-Nij/view?usp=sharing"},{"type":"Thank You Card","kind":"Finishing","value":"Embossed - Uncoated","photo":"https://drive.google.com/file/d/1rloqVJs6rFrh0CBR3g0WcwGtB8FEEh18/view?usp=sharing"},{"type":"Thank You Card","kind":"Finishing","value":"Hotprint - Uncoated","photo":"https://drive.google.com/file/d/1_WHDsSGe_yvqvi2_2cYDMUnXms7Io2S8/view?usp=sharing"},{"type":"Thank You Card","kind":"Finishing","value":"Print - Glossy","photo":"https://drive.google.com/file/d/1EVf-AoGqQHRrZjOYIHkB7MUX2ZMuYZAo/view?usp=drive_link"},{"type":"Thank You Card","kind":"Finishing","value":"Print - Doff","photo":"https://drive.google.com/file/d/11DShv7JLhvcgd4XHujhsqLisx2lcmFNi/view?usp=drive_link"},{"type":"Thank You Card","kind":"Finishing","value":"Print - Uncoated","photo":"https://drive.google.com/file/d/1iD2W8DFi0c4How5M5Z0fauM9mXiEAioZ/view?usp=drive_link"},{"type":"Thank You Card","kind":"Ukuran","value":"6x9","photo":"https://drive.google.com/file/d/11DShv7JLhvcgd4XHujhsqLisx2lcmFNi/view?usp=drive_link"},{"type":"Thank You Card","kind":"Ukuran","value":"10,5x14,8","photo":"https://drive.google.com/file/d/1Xrvy0Ke9X5_4js2NYnnJY-82yPtbelG3/view?usp=sharing"}],"prodExtras":{"Irvine Card Wallet":{"slots":{"back":1,"front":2,"frontMax":4,"backMax":4}},"Idaho Card Wallet":{"slots":{"back":3,"front":3,"frontMax":4,"backMax":4}},"Animal Keychain":{"reclConv":"Simple"},"Ankara Key Chain":{"reclConv":"Simple"},"Dortmund Luggage Tag":{"reclConv":"Simple"},"Durham Luggage Tag":{"reclConv":"Simple"},"Erie ID Tag":{"slots":{"back":1,"front":0,"frontMax":0,"backMax":2},"reclConv":"Simple"},"Ginza Bifold Card Wallet":{"slots":{"back":3,"front":3,"frontMax":3,"backMax":3},"reclConv":"Simple"},"Hungary Card Case":{"reclConv":"Simple"},"Ibiza Card Wallet":{"slots":{"back":1,"front":2,"frontMax":4,"backMax":4},"reclConv":"Simple"},"Jericho Key Wallet":{"reclConv":"Simple"},"Jinan Key Wallet":{"reclConv":"Simple"},"Kobe Key Case":{"reclConv":"Simple"},"Nagano Passport Wallet":{"reclConv":"Complex"},"Napa Passport Wallet":{"slots":{"back":0,"front":2,"frontMax":4,"backMax":0,"flabel":"Inside"},"reclConv":"Complex"},"Richmond Toiletries":{"reclConv":"Complex","stdRef":[407000,352000,220000,216000,214000,212000,206000]},"Ube Tray":{"reclConv":"Complex"},"Iriga Card Wallet for Netflix":{"slots":{"back":1,"front":2,"frontMax":4,"backMax":4}},"Lanyard for Artax Indonesia":{"slots":{"back":1,"front":0,"frontMax":0,"backMax":2}}},"svcExtras":{"Calligraphy":{"perPcTiers":[{"max":49,"price":65000},{"max":999999,"price":35000}]}}};</script>
+<script>
+let DB=null, M=null;
+let CUR=localStorage.getItem('rove_cur')||'IDR';
+let RATES=Object.assign({aud:10800,usd:16400,pf:1.10,seaUsdCbm:100,seaFix:320},JSON.parse(localStorage.getItem('rove_rates')||'{}'));
+function saveRates(){localStorage.setItem('rove_rates',JSON.stringify(RATES));}
+const rpF=n=>'Rp '+Math.round(n).toLocaleString('en-AU');
+const audF=n=>'A$ '+(n/RATES.aud).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2});
+const idr=n=>CUR==='AUD'?audF(n):rpF(n);
+function syncCurBtn(){var b=document.getElementById('curBtn');if(b)b.textContent=CUR==='IDR'?'Rp IDR':'A$ AUD';}
+function reRender(){renderTab();renderOrder();}
+function toggleCur(){CUR=CUR==='IDR'?'AUD':'IDR';localStorage.setItem('rove_cur',CUR);syncCurBtn();reRender();if(activeTab==='shipping'&&_shipDone)calcShipping();}
+function setAudRate(v){var n=parseFloat(v);if(n>0){RATES.aud=n;saveRates();reRender();if(activeTab==='shipping'&&_shipDone)calcShipping();}}
+const enc=s=>(s||'').replace(/'/g,"\\'");
+const esc=s=>(s||'').replace(/"/g,'&quot;');
+const RECLAIMED_FACTOR=0.90; // placeholder — confirm with PM
+let client=Object.assign({enq:'',name:'',eventDate:'',deadline:''},JSON.parse(localStorage.getItem('rove_client')||'{}'));
+let order=JSON.parse(localStorage.getItem('rove_order')||'[]');
+let oid=order.reduce((m,o)=>Math.max(m,o.id||0),0);
+let activeTab='product';
+
+function interp(xs,ys,x){const p=[];for(let i=0;i<xs.length;i++)if(ys[i]!=null)p.push({x:xs[i],y:ys[i]});if(!p.length)return 0;if(p.length===1)return p[0].y;
+ if(x<=p[0].x){const a=p[0],b=p[1];return Math.max(0,a.y+(b.y-a.y)/(b.x-a.x)*(x-a.x));}
+ if(x>=p[p.length-1].x){const a=p[p.length-2],b=p[p.length-1];return Math.max(0,b.y+(b.y-a.y)/(b.x-a.x)*(x-b.x));}
+ for(let i=0;i<p.length-1;i++){if(x>=p[i].x&&x<=p[i+1].x){const a=p[i],b=p[i+1];return a.y+(b.y-a.y)/(b.x-a.x)*(x-a.x);}}return p[p.length-1].y;}
+function dims(s){return (String(s).match(/[\d]+(?:[.,]\d+)?/g)||[]).map(v=>parseFloat(v.replace(',','.'))).filter(v=>v>0);}
+function surfaceArea(s){const d=dims(s);if(d.length>=3)return 2*(d[0]*d[1]+d[0]*d[2]+d[1]*d[2]);if(d.length===2)return d[0]*d[1]*2;if(d.length===1)return d[0]*d[0];return 0;}
+function allowed(v){v=(v||'').toLowerCase().trim();return v.startsWith('bisa')&&!v.startsWith('tidak');}
+/* British/Australian English display layer — translate raw Indonesian DB values for display only.
+   Underlying values are kept intact so matching/photo lookup still work. */
+const I18N_FULL={
+ 'bisa, lebih besar':'larger','bisa, lebih kecil':'smaller',
+ 'bisa, lebih kecil, lebih besar':'smaller or larger','bisa, lebih besar, lebih kecil':'larger or smaller',
+ 'bisa, lebih pendek, lebih panjang':'shorter or longer',
+ 'tambah / kurangi card slot':'add / remove card slots',
+ 'mengurangi barang dalam package':'remove items from the set',
+ 'hilangkan compartment (magnet dokumen, magnet notes, slot pulpen, stand hp)':'remove compartments (document magnet, notes magnet, pen slot, phone stand)',
+ 'tali':'Strap','sise':'Size','sisi':'Side','ukuran':'Size','model':'Model','material':'Material','finishing':'Finishing','construction':'Construction','coat':'Coating','cut':'Cut'};
+const I18N_TOKENS=[['Tali Gross Grain','Gross Grain Strap'],['Tali Katun','Cotton Strap'],['Tali Velvet','Velvet Strap'],['Tanpa Tali','No Strap'],['Bordir','Embroidery'],['Polos','Plain'],['Sablon','Screen Print'],['Kotak','Square'],['Doff','Matte']];
+function EN(s){if(s==null||s==='')return s;const k=String(s).trim();const lk=k.toLowerCase();if(I18N_FULL[lk]!=null)return I18N_FULL[lk];let out=k;I18N_TOKENS.forEach(p=>{out=out.split(p[0]).join(p[1]);});return out;}
+/* photos */
+function driveThumb(link){if(!link)return '';let m=String(link).match(/\/file\/d\/([\w-]+)/);if(m)return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w1000';m=String(link).match(/[?&]id=([\w-]+)/);if(m)return 'https://drive.google.com/thumbnail?id='+m[1]+'&sz=w1000';return '';}
+const CAT_HEX={product:'#25342a',packaging:'#5a3a26',cards:'#6b4327'};
+function dummyImg(label,bg){const init=(label||'?').replace(/[^A-Za-z ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'R';
+ const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='180'><rect width='100%' height='100%' fill='${bg}'/><circle cx='120' cy='74' r='40' fill='rgba(255,255,255,.10)'/><text x='120' y='86' font-family='DM Sans,Arial' font-size='40' font-weight='600' fill='rgba(255,255,255,.92)' text-anchor='middle'>${init}</text><text x='120' y='150' font-family='DM Sans,Arial' font-size='13' fill='rgba(255,255,255,.55)' text-anchor='middle'>photo pending</text></svg>`;
+ return 'data:image/svg+xml,'+encodeURIComponent(svg);}
+function prodImg(p){return (p.photos&&p.photos.length)?p.photos[0]:dummyImg(p.au||p.hq,CAT_HEX.product);}
+/* collateral photo lookup */
+// normalise collateral keys so packaging option values match the collateral sheet
+// (e.g. "Hot Print (Foil)"->"hotprint", "Collapsable"/"Collapsible", "6 x 9"->"6x9")
+function colKey(s){let k=String(s==null?'':s).toLowerCase().trim().replace(/\s+/g,' ');
+ k=k.replace(/hot\s*print\s*\(foil\)/g,'hotprint').replace(/hot print/g,'hotprint');
+ k=k.replace(/collapsable/g,'collapsible');
+ k=k.replace(/(\d)\s*x\s*(\d)/g,'$1x$2');
+ return k;}
+const COL={};
+function colGet(c,k,v){return (v&&c[k])?(c[k][colKey(v)]||''):'';}
+function colPhotos(typeName,sel){const c=COL[typeName]||{};let order;
+ if(typeName==='Thank You Card')order=[['Material',sel.material],['Finishing',(sel.finishing&&sel.coat)?sel.finishing+' - '+sel.coat:sel.finishing],['Ukuran',sel.sise]];
+ else if(typeName==='Soft Pouch')order=[['Feature',sel.model],['Material',sel.material],['Tali',sel.tali],['Finishing',sel.finishing]];
+ else order=[['Feature',(sel.model&&sel.construction)?sel.model+' - '+sel.construction:sel.model],['Finishing',sel.finishing]];
+ const out=[];for(const [k,v] of order){const u=colGet(c,k,v);if(u)out.push(u);}
+ if(!out.length){for(const k in c){for(const v in c[k]){if(c[k][v]){out.push(c[k][v]);break;}}if(out.length)break;}}
+ return out.filter((u,i)=>u&&out.indexOf(u)===i);}
+/* quantity brackets — price locked to the range */
+function prodBracket(q){return q<=12?0:q<=49?1:q<=99?2:q<=199?3:q<=299?4:q<=499?5:6;}
+function packBracket(q){return q<=50?0:q<=100?1:q<=200?2:q<=300?3:q<=500?4:5;}
+function tierVal(a,i){if(a[i]!=null)return a[i];for(var j=i;j>=0;j--)if(a[j]!=null)return a[j];for(var k=i;k<a.length;k++)if(a[k]!=null)return a[k];return 0;}
+/* lightbox */
+var LB={ph:[],i:0};
+function openLightbox(ph,i){if(!ph||!ph.length)return;LB={ph:ph,i:i||0};var o=document.createElement('div');o.className='lightbox';o.id='lbox';o.onclick=function(e){if(e.target.id==='lbox'||e.target.tagName==='IMG')closeLB();};o.innerHTML=(ph.length>1?'<button class="lb-nav lb-prev" onclick="event.stopPropagation();lbStep(-1)">&#8249;</button>':'')+'<img src="'+ph[LB.i]+'">'+(ph.length>1?'<button class="lb-nav lb-next" onclick="event.stopPropagation();lbStep(1)">&#8250;</button>':'');document.body.appendChild(o);}
+function lbStep(d){LB.i=(LB.i+d+LB.ph.length)%LB.ph.length;document.querySelector('#lbox img').src=LB.ph[LB.i];}
+function closeLB(){var o=document.getElementById('lbox');if(o)o.remove();}
+function openProdLB(){if(cur&&cur.photos&&cur.photos.length)openLightbox(cur.photos,cfg.gIdx||0);}
+function openKombLB(){if(ks._ph&&ks._ph.length)openLightbox(ks._ph,ks.gIdx||0);}
+
+const TABS=[{id:'client',label:'Client',color:'var(--c-client)'},{id:'product',label:'Main Product',color:'var(--c-leather)'},{id:'packaging',label:'Packaging',color:'var(--c-pack)'},{id:'cards',label:'Cards',color:'var(--c-cards)'},{id:'shipping',label:'Shipping',color:'var(--c-ship)'}];
+const catColor={client:'var(--c-client)',product:'var(--c-leather)',packaging:'var(--c-pack)',cards:'var(--c-cards)',shipping:'var(--c-ship)'};
+function renderTabs(){document.getElementById('tabs').innerHTML=TABS.map(t=>`<div class="tab ${t.id===activeTab?'active':''}" style="${t.id===activeTab?`background:${t.color}`:''}" onclick="setTab('${t.id}')">${t.label}</div>`).join('');}
+function setTab(id){activeTab=id;renderTabs();renderTab();}
+function renderTab(){const b=document.getElementById('tabBody');
+ if(activeTab==='client')b.innerHTML=clientUI();
+ else if(activeTab==='product'){b.innerHTML=prodUI();renderProdList();if(cur)renderProdCfg();}
+ else if(activeTab==='shipping'){b.innerHTML=shipUI();renderShipItems();calcShipping();}
+ else{b.innerHTML=kombUI(activeTab);renderKombSel(activeTab);}}
+
+/* CLIENT */
+function clientUI(){return `<div class="sec-label">Client details</div>
+ <div class="field"><label>Enquiry number</label><input value="${esc(client.enq)}" placeholder="e.g. ENQ0042" oninput="client.enq=this.value;saveClient()"></div>
+ <div class="field"><label>Client name</label><input value="${esc(client.name)}" placeholder="e.g. Joanne &amp; Calvin" oninput="client.name=this.value;saveClient()"></div>
+ <div class="two">
+  <div class="field"><label>Event date</label><div class="dp" id="dp-eventDate"><input class="dp-inp" readonly value="${esc(fmtDate(client.eventDate))}" placeholder="Select date…" onclick="dpOpen('eventDate')"><span class="dp-cal">📅</span></div></div>
+  <div class="field"><label>Delivery deadline</label><div class="dp" id="dp-deadline"><input class="dp-inp" readonly value="${esc(fmtDate(client.deadline))}" placeholder="Select date…" onclick="dpOpen('deadline')"><span class="dp-cal">📅</span></div></div>
+ </div>
+ <div class="muted">Shown on the ORDER LIST &amp; PDF estimate.</div>`;}
+function saveClient(){localStorage.setItem('rove_client',JSON.stringify(client));renderOrder();}
+/* date picker — stores ISO (YYYY-MM-DD), displays "Month D, YYYY", small calendar popup */
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function fmtDate(iso){const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso||'');return m?MONTHS[+m[2]-1]+' '+(+m[3])+', '+m[1]:(iso||'');}
+function isoToday(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
+let dpKey=null,dpY,dpM;
+function dpOpen(key){dpKey=key;const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(client[key]||'');if(m){dpY=+m[1];dpM=+m[2]-1;}else{const n=new Date();dpY=n.getFullYear();dpM=n.getMonth();}dpShow();}
+function dpShow(){dpClose();const wrap=document.getElementById('dp-'+dpKey);if(!wrap)return;const pop=document.createElement('div');pop.className='dp-pop';pop.id='dp-pop';pop.innerHTML=dpGrid();wrap.appendChild(pop);setTimeout(function(){document.addEventListener('mousedown',dpOutside);},0);}
+function dpGrid(){const first=new Date(dpY,dpM,1).getDay(),days=new Date(dpY,dpM+1,0).getDate(),sel=client[dpKey],tod=isoToday();let c='';for(let i=0;i<first;i++)c+='<div class="dp-cell empty"></div>';for(let d=1;d<=days;d++){const iso=dpY+'-'+String(dpM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');c+=`<div class="dp-cell${iso===sel?' sel':''}${iso===tod?' today':''}" onclick="dpPick('${iso}')">${d}</div>`;}const wd=['Su','Mo','Tu','We','Th','Fr','Sa'].map(w=>`<div class="dp-wd">${w}</div>`).join('');return `<div class="dp-head"><button type="button" onclick="dpNav(-1)">‹</button><div class="dp-title">${MONTHS[dpM]} ${dpY}</div><button type="button" onclick="dpNav(1)">›</button></div><div class="dp-grid">${wd}${c}</div><div class="dp-foot"><button type="button" onclick="dpPick('${tod}')">Today</button><button type="button" onclick="dpClear('${dpKey}')">Clear</button></div>`;}
+function dpNav(d){dpM+=d;if(dpM<0){dpM=11;dpY--;}else if(dpM>11){dpM=0;dpY++;}const p=document.getElementById('dp-pop');if(p)p.innerHTML=dpGrid();}
+function dpSet(key,iso){client[key]=iso;saveClient();const wrap=document.getElementById('dp-'+key);if(wrap){const inp=wrap.querySelector('.dp-inp');if(inp)inp.value=fmtDate(iso);}}
+function dpPick(iso){dpSet(dpKey,iso);dpClose();}
+function dpClear(key){dpSet(key,'');dpClose();}
+function dpClose(){const p=document.getElementById('dp-pop');if(p)p.remove();document.removeEventListener('mousedown',dpOutside);}
+function dpOutside(e){if(!e.target.closest('.dp'))dpClose();}
+
+/* MAIN PRODUCT */
+let cur=null,cfg=null;
+const SERIES_ORDER=['ROVE AU Catalogue','Regular Product','Reclaimed Product','Portfolio'];
+let prodSeries='';
+function prodUI(){
+ const seriesList=[...SERIES_ORDER.filter(s=>DB.products.some(p=>p.series===s)),...[...new Set(DB.products.map(p=>p.series))].filter(s=>s&&!SERIES_ORDER.includes(s))];
+ const opts=['<option value="">All series</option>',...seriesList.map(s=>`<option value="${esc(s)}" ${prodSeries===s?'selected':''}>${s}</option>`)].join('');
+ return `<div class="sec-label">Product catalogue</div>
+ <div class="two">
+  <div class="field"><label>Search</label><input class="search" id="psearch" placeholder="Name, material…" oninput="renderProdList()"></div>
+  <div class="field"><label>Series</label><select onchange="prodSeries=this.value;renderProdList()">${opts}</select></div>
+ </div>
+ <div class="prod-list" id="plist"></div><div id="pcfg"></div>`;}
+function renderProdList(){
+ const q=(document.getElementById('psearch')?.value||'').toLowerCase();
+ const list=DB.products.filter(p=>(!prodSeries||p.series===prodSeries)&&(!q||((p.hq+' '+p.au+' '+p.series+' '+p.material).toLowerCase().includes(q))));
+ const groups={};list.forEach(p=>{(groups[p.series||'Other']=groups[p.series||'Other']||[]).push(p);});
+ const order=[...SERIES_ORDER.filter(s=>groups[s]),...Object.keys(groups).filter(s=>!SERIES_ORDER.includes(s))];
+ let h='';order.forEach(g=>{h+=`<div class="cat-group"><div class="cat-head">${g}</div>`;
+  groups[g].forEach(p=>{const i=DB.products.indexOf(p);const lo=p.t[6]||p.t.filter(x=>x).slice(-1)[0];
+   h+=`<div class="prod-row ${cur===p?'active':''}" onclick="pickProd(${i})"><div class="prod-left"><img class="pthumb" src="${prodImg(p)}" alt=""><div><div class="prod-name">${p.hq}</div>${p.au?`<div class="prod-alt">${p.au}</div>`:''}</div></div><div class="prod-price">${lo?idr(lo):'-'}</div></div>`;});
+  h+='</div>';});
+ const el=document.getElementById('plist');if(el)el.innerHTML=h||'<div class="muted" style="padding:14px">No matching products.</div>';
+}
+function pickProd(i){cur=DB.products[i];
+ const sl0=cur.slots||null;
+ cfg={qty:75,gIdx:0,material:'base',newSize:'',slotFront:sl0?sl0.front:0,slotBack:sl0?sl0.back:0,rmParts:[],rmComp:[],services:new Set(),logoPos:'',svcDims:'',featAdj:0,notes:''};
+ renderProdList();renderProdCfg();}
+function renderProdCfg(){
+ const p=cur;
+ const tierChips=M.productTiers.map((lbl,i)=>`<div class="tier ${prodBracket(cfg.qty)===i?'active':''}" onclick="pSetQty(${M.productTierQty[i]})"><div class="tq">${lbl}</div><div class="tp">${p.t[i]!=null?idr(p.t[i]):'-'}</div></div>`).join('');
+ // material options
+ const isFaux=/faux/i.test(p.material), isRecl=/reclaimed/i.test(p.material);
+ let matOpts=`<option value="base" ${cfg.material==='base'?'selected':''}>${matBase(p)}</option>`;
+ if(isFaux)matOpts+=`<option value="toleather" ${cfg.material==='toleather'?'selected':''}>Convert to Leather</option>`;
+ else if(allowed(p.adjFaux))matOpts+=`<option value="faux" ${cfg.material==='faux'?'selected':''}>Faux Leather</option>`;
+ if(isRecl&&p.reclConv)matOpts+=`<option value="tostandard" ${cfg.material==='tostandard'?'selected':''}>Convert to Standard Leather</option>`;
+ if(!isRecl&&allowed(p.adjReclaimed))matOpts+=`<option value="reclaimed" ${cfg.material==='reclaimed'?'selected':''}>Reclaimed Leather</option>`;
+ const hasConv=isFaux||allowed(p.adjFaux)||(isRecl&&p.reclConv)||(!isRecl&&allowed(p.adjReclaimed));
+ const matSel=hasConv?`<div class="field"><label>Material conversion</label><select onchange="cfg.material=this.value;calcProd()">${matOpts}</select></div>`:'';
+ // feature — type-specific control driven by the product's note
+ let featBlock='';
+ if(allowed(p.adjFeature)){const ft=featType(p);
+  if(ft==='cardslot'){
+   const sl=p.slots;let rows='';
+   if(sl){
+    if(sl.front>0||sl.frontMax>0)rows+=slotStepper('Front',sl.flabel||'Front',sl.front,sl.frontMax,cfg.slotFront);
+    if(sl.back>0||sl.backMax>0)rows+=slotStepper('Back','Back',sl.back,sl.backMax,cfg.slotBack);
+   }else{
+    rows=`<div class="slotrow"><span class="slotlab">Card slots</span><div class="stepper"><button type="button" onclick="cfgSlotSide('Front',-1)">−</button><input type="number" readonly value="${cfg.slotFront||0}" id="cslot-Front" style="width:54px"><button type="button" onclick="cfgSlotSide('Front',1)">+</button></div></div>`;
+   }
+   featBlock=`<div class="field"><label>Card slots <span class="hint">— remove to 0, add up to max</span></label>
+     ${rows}
+     <div class="note-sm">Estimate — each slot changes the product's size; price recalculated from the new size (material + labour). Removing all slots leaves the bare product. Confirm with PM.</div></div>`;
+  } else if(ft==='giftset'){
+   const parts=giftParts(p);
+   const items=parts.map((c,i)=>`<label class="ck"><input type="checkbox" ${cfg.rmParts.includes(i)?'checked':''} onchange="cfgPart(${i},this.checked)"><span class="nm">${c.name}</span>${c.est?' <span class="est-tag">est</span>':''}</label>`).join('');
+   featBlock=`<div class="field"><label>Remove items from set <span class="hint">— gift set</span></label>
+     <div class="cklist">${items||'<span class="muted">No component list.</span>'}</div>
+     <div class="note-sm">Removing an item subtracts its per-unit value at this quantity (incl. labour). Confirm with PM.</div></div>`;
+  } else if(ft==='compartment'){
+   const items=COMPARTMENTS.map(c=>`<label class="ck"><input type="checkbox" ${cfg.rmComp.includes(c.k)?'checked':''} onchange="cfgComp('${c.k}',this.checked)"><span class="nm">${c.label}</span></label>`).join('');
+   featBlock=`<div class="field"><label>Remove compartments <span class="hint">— desk mat</span></label>
+     <div class="cklist">${items}</div>
+     <div class="note-sm">Estimate — removing a compartment reduces the price (material + labour). Confirm with PM.</div></div>`;
+  } else {
+   featBlock=`<div class="field"><label>Feature change <span class="hint">— ${p.note&&p.note!=='-'?EN(p.note):'as required'}</span></label><input type="number" value="${cfg.featAdj||''}" placeholder="adjustment per unit (Rp, +/-)" oninput="cfg.featAdj=parseFloat(this.value)||0;calcProd()"><div class="note-sm">Estimate — confirm with PM.</div></div>`;
+  }}
+ const sizeBlock=allowed(p.adjSize)?`<div class="field"><label>Resize <span class="hint">— ${EN(p.adjSize)}</span></label><input value="${esc(cfg.newSize)}" placeholder="new size, e.g. ${esc(p.size)}" oninput="cfg.newSize=this.value;calcProd()"><div class="note-sm">Estimate — price scales with size; confirm with PM.</div></div>`:'';
+ // services
+ const svcMax=2;const svcs=DB.services.map((s,i)=>{const on=cfg.services.has(i);const dis=!on&&cfg.services.size>=svcMax;return `<div class="chip svc ${on?'active':''} ${dis?'dis':''}" onclick="${dis?'':`pTogS(${i})`}">${s.name}</div>`;}).join('');
+ const ph=p.photos&&p.photos.length?p.photos:[];const mainImg=ph.length?ph[cfg.gIdx||0]:dummyImg(p.au||p.hq,CAT_HEX.product);
+ const imgHtml=`<img class="pimg" src="${mainImg}" onclick="openProdLB()" alt="">${ph.length>1?`<div class="gallery">${ph.map((u,i)=>`<img class="gthumb ${(cfg.gIdx||0)===i?'active':''}" src="${u}" onclick="cfg.gIdx=${i};renderProdCfg()">`).join('')}</div>`:''}`;
+ document.getElementById('pcfg').innerHTML=`
+  <div class="sec-label" style="margin-top:18px">${p.hq}${p.au&&p.au!==p.hq?' / '+p.au:''}</div>
+  ${imgHtml}
+  <div class="specline"><b>Size:</b> ${p.size||'-'} &nbsp;·&nbsp; <b>Material:</b> ${p.material||'-'}${p.au?`<br><b>HQ name:</b> ${p.hq} &nbsp;·&nbsp; <b>AU name:</b> ${p.au}`:''}</div>
+  <div class="field"><label>Quantity</label><div class="tiers">${tierChips}</div></div>
+  <div class="field"><label>Or other quantity <span class="hint">— priced at its range</span></label><input type="number" id="pqty" value="${cfg.qty}" min="1" oninput="pSetQtyCustom(this.value)"></div>
+  ${sizeBlock}${matSel}${featBlock}
+  <div class="field"><label>Additional services <span class="hint">— max 2</span></label><div class="chips">${svcs}</div><div class="note-sm">All service pricing is based on a standard maximum size of 3 × 3 cm. Requests exceeding this size may require reconfirmation and revised pricing.</div></div>
+  ${cfg.services.size?`<div class="two">
+    <div class="field"><label>Logo placement</label><input value="${esc(cfg.logoPos)}" placeholder="e.g. front centre" oninput="cfg.logoPos=this.value;calcProd()"></div>
+    <div class="field"><label>Logo size <span class="hint">(note)</span></label><input value="${esc(cfg.svcDims)}" placeholder="e.g. 3 x 3 cm" oninput="cfg.svcDims=this.value;calcProd()"></div></div>`:''}
+  <div class="field"><label>Additional notes</label><textarea oninput="cfg.notes=this.value" placeholder="e.g. special colour, other requests">${esc(cfg.notes)}</textarea></div>
+  <div class="livebar"><div><div class="live-l">Estimated cost / unit</div><div class="live-v" id="pcost">Rp 0</div><div class="live-s" id="psub"></div></div>
+   <button class="btn btn-gold" onclick="addProd()">+ Add to order</button></div>
+  <div class="incl" id="pbd"></div>`;
+ calcProd();
+}
+function pSetQty(q){cfg.qty=q;renderProdCfg();}
+function pSetQtyCustom(v){const n=parseInt(v);if(n>0){cfg.qty=n;const b=prodBracket(n);document.querySelectorAll('#pcfg .tier').forEach((e,i)=>e.classList.toggle('active',i===b));calcProd();}}
+function pTogS(i){if(cfg.services.has(i))cfg.services.delete(i);else{if(cfg.services.size>=2)return;cfg.services.add(i);}renderProdCfg();}
+/* feature-adjustment helpers */
+const SLOT_H=0.5,SLOT_W=0.3,SLOT_T=0.2;  // per card slot: +height,+width,+thickness (cm) — estimate
+const COMPARTMENTS=[{k:'doc',label:'Document magnet',frac:0.07},{k:'notes',label:'Notes magnet',frac:0.06},{k:'pen',label:'Pen slot',frac:0.05},{k:'phone',label:'Phone stand',frac:0.08}];
+function featType(p){const n=(p.note||'').toLowerCase();if(/card slot/.test(n))return 'cardslot';if(/barang dalam package/.test(n))return 'giftset';if(/compartment/.test(n))return 'compartment';return 'manual';}
+function matBase(p){const m=(p.material||'').toLowerCase();if(/faux/.test(m))return 'Faux Leather';if(/reclaimed/.test(m))return 'Reclaimed Leather';if(/suede/.test(m))return 'Suede';if(/corduroy/.test(m))return 'Corduroy Fabric';if(/canvas/.test(m))return 'Canvas';return 'Leather';}
+function svcRate(s,q){if(s.perPcTiers&&s.perPcTiers.length){for(var k=0;k<s.perPcTiers.length;k++){if(q<=s.perPcTiers[k].max)return s.perPcTiers[k].price;}return s.perPcTiers[s.perPcTiers.length-1].price;}return s.perPc||0;}
+function saFromDims(d){if(!d||!d.length)return 0;if(d.length>=3)return 2*(d[0]*d[1]+d[0]*d[2]+d[1]*d[2]);if(d.length===2)return d[0]*d[1]*2;return d[0]*d[0];}
+function fmtDims(d){return d.map(x=>(Math.round(x*100)/100).toString().replace('.',',')).join(' x ')+' cm';}
+function giftParts(p){return (DB.giftsets&&DB.giftsets[p.hq])||[];}
+function slotStepper(side,label,base,max,curN){return `<div class="slotrow"><span class="slotlab">${label} <span class="hint">— base ${base}, max ${max}</span></span><div class="stepper"><button type="button" onclick="cfgSlotSide('${side}',-1)" ${curN<=0?'disabled':''}>−</button><input type="number" readonly value="${curN}" id="cslot-${side}" style="width:54px"><button type="button" onclick="cfgSlotSide('${side}',1)" ${curN>=max?'disabled':''}>+</button></div></div>`;}
+function cfgSlotSide(side,d){const sl=cur.slots;const key=side==='Front'?'slotFront':'slotBack';const max=sl?(side==='Front'?sl.frontMax:sl.backMax):99;let v=(cfg[key]||0)+d;v=Math.max(0,Math.min(max,v));cfg[key]=v;renderProdCfg();}
+function cfgPart(i,on){const a=new Set(cfg.rmParts);if(on)a.add(i);else a.delete(i);cfg.rmParts=[...a];calcProd();}
+function cfgComp(k,on){const a=new Set(cfg.rmComp);if(on)a.add(k);else a.delete(k);cfg.rmComp=[...a];calcProd();}
+function calcProd(){
+ const p=cur;if(!p)return;
+ const ft=featType(p),featAllowed=allowed(p.adjFeature);
+ let base=tierVal(p.t,prodBracket(cfg.qty));let est=false;
+ // dimensions: base -> resize -> card slots
+ let d=dims(p.size);const baseArea=surfaceArea(p.size);
+ if(allowed(p.adjSize)&&cfg.newSize){const nd=dims(cfg.newSize);if(nd.length){d=nd;est=true;}}
+ let slotN=0,slotDesc='';
+ if(featAllowed&&ft==='cardslot'){const sl=p.slots;
+  if(sl){slotN=((cfg.slotFront||0)-sl.front)+((cfg.slotBack||0)-sl.back);
+   const ps=[];if((sl.front>0||sl.frontMax>0)&&cfg.slotFront!==sl.front)ps.push((sl.flabel||'Front')+' '+sl.front+'→'+cfg.slotFront);
+   if((sl.back>0||sl.backMax>0)&&cfg.slotBack!==sl.back)ps.push('Back '+sl.back+'→'+cfg.slotBack);slotDesc=ps.join(', ');}
+  else slotN=cfg.slotFront||0;}
+ if(featAllowed&&ft==='cardslot'&&slotN!==0){d=d.slice();
+  if(d[0]!=null)d[0]=Math.max(0.1,d[0]+slotN*SLOT_H);
+  if(d[1]!=null)d[1]=Math.max(0.1,d[1]+slotN*SLOT_W);
+  if(d[2]!=null)d[2]=Math.max(0.1,d[2]+slotN*SLOT_T);
+  est=true;}
+ const area=saFromDims(d)||baseArea;const sizeMult=(baseArea>0)?area/baseArea:1;
+ const sized=Math.round(base*sizeMult);const newDimStr=fmtDims(d);
+ let matDelta=0,matLabel='';
+ if(cfg.material==='faux'){
+   if(p.hq==='Richmond Toiletries'||p.hq==='Rason Pouch'){matDelta=Math.round(area*(DB.mat.fauxCm2-DB.mat.leatherCm2));}  // pre-calibrated — keep simple area model
+   else{const sd=d.slice().sort((x,y)=>y-x);const threeD=(sd.length>=3&&sd[1])?sd[2]/sd[1]:0.04;const sizeScale=Math.max(0.3,Math.min(1.5,area/2000));const mult=1+5*threeD*sizeScale;const matL=Math.min(area*mult*DB.mat.leatherCm2,0.35*sized);matDelta=-Math.round(matL*(DB.mat.leatherCm2-DB.mat.fauxCm2)/DB.mat.leatherCm2);}
+   matLabel='Faux Leather';est=true;}
+ else if(cfg.material==='toleather'){matDelta=Math.round(area*(DB.mat.leatherCm2-DB.mat.fauxCm2));matLabel='Leather (from faux)';est=true;}
+ else if(cfg.material==='tostandard'){const d=p.reclConv==='Complex'?0.33:0.12;
+   if(p.stdRef){const conv=sized*(1/(1-d));const ref=tierVal(p.stdRef,prodBracket(cfg.qty))||0;const std=Math.round((conv+ref)/2);matDelta=std-sized;matLabel='Standard Leather (≈ Rason + convert)';}
+   else{matDelta=Math.round(sized*(1/(1-d)-1));matLabel='Standard Leather ('+(p.reclConv||'Simple')+')';}est=true;}
+ else if(cfg.material==='reclaimed'){matDelta=Math.round(sized*(RECLAIMED_FACTOR-1));matLabel='Reclaimed Leather';est=true;}
+ // feature adjustments (gift set / compartment / manual). Card slot is priced via sizeMult above.
+ let featAdj=0,featLabel='',featNames=[];
+ // Gift set: PROPORTIONAL — each removed item takes its share of the full price, so
+ // removing every item reduces the total to exactly 0 (nothing left in the set).
+ if(featAllowed&&ft==='giftset'){const parts=giftParts(p);let tot=0,rem=0;parts.forEach((c,i)=>{const v=tierVal(c.t,prodBracket(cfg.qty))||0;tot+=v;if((cfg.rmParts||[]).includes(i)){rem+=v;featNames.push(c.name);}});if(rem>0&&tot>0){featAdj=-Math.round(sized*rem/tot);featLabel='Removed: '+featNames.join(', ');est=true;}}
+ // Desk mat: each compartment is a fixed share of the price; the bare mat always remains,
+ // so removing all compartments leaves the base desk-mat price (NOT 0).
+ else if(featAllowed&&ft==='compartment'){(cfg.rmComp||[]).forEach(k=>{const c=COMPARTMENTS.find(x=>x.k===k);if(c){featAdj-=Math.round(sized*c.frac);featNames.push(c.label);}});if(featAdj){featLabel='Removed: '+featNames.join(', ');est=true;}}
+ else if(featAllowed&&ft==='manual'){featAdj=cfg.featAdj||0;if(featAdj){featLabel='Feature change';est=true;}}
+ let svcPerPc=0,svcFix=0,svcNames=[];cfg.services.forEach(i=>{const s=DB.services[i];svcPerPc+=svcRate(s,cfg.qty);svcFix+=(s.fix||0);svcNames.push(s.name);});
+ const unit=Math.max(0,sized+matDelta+featAdj+svcPerPc);
+ cfg._calc={base,sized,sizeMult,slotN,slotDesc,newDimStr,ft,matDelta,matLabel,featAdj,featLabel,featNames,svcPerPc,svcFix,svcNames,unit,est};
+ const el=document.getElementById('pcost');if(!el)return;el.innerHTML=idr(unit)+(est?' <span class="est-tag">estimate</span>':'');
+ document.getElementById('psub').textContent=cfg.qty+' pcs';
+ const L=[`<div class="l"><span>Base · ${cfg.qty} pcs</span><span class="mono">${idr(base)}</span></div>`];
+ if(sizeMult!==1){const lbl=slotN?`Card slots: ${slotDesc} → ${newDimStr}`:`Resize to ${cfg.newSize}`;L.push(`<div class="l"><span>${lbl}</span><span class="mono">${sized-base>=0?'+':''}${idr(sized-base)}</span></div>`);}
+ if(matLabel)L.push(`<div class="l"><span>${matLabel} conversion</span><span class="mono">${matDelta>=0?'+':''}${idr(matDelta)}</span></div>`);
+ if(featAdj)L.push(`<div class="l"><span>${featLabel}</span><span class="mono">${featAdj>=0?'+':''}${idr(featAdj)}</span></div>`);
+ if(svcNames.length)L.push(`<div class="l"><span>Services: ${svcNames.join(', ')}${cfg.logoPos?' · '+cfg.logoPos:''}</span><span class="mono">${svcPerPc?'+'+idr(svcPerPc)+'/u':''}</span></div>`);
+ document.getElementById('pbd').innerHTML=L.join('');
+}
+function addProd(){const p=cur,c=cfg._calc;
+ const sizeBit=c.slotN?('card slots '+c.slotDesc+' ('+c.newDimStr+')'):((c.sizeMult&&c.sizeMult!==1)?('size '+cfg.newSize):null);
+ const bits=[sizeBit,c.matLabel||null,c.featLabel||null,...c.svcNames,cfg.svcDims?('logo '+cfg.svcDims):null,cfg.logoPos?('@ '+cfg.logoPos):null,cfg.notes?('note: '+cfg.notes):null].filter(Boolean);
+ order.push({id:++oid,cat:'product',name:p.au||p.hq,sub:(p.au&&p.au!==p.hq)?p.hq:'',spec:bits.join(' · '),unit:c.unit,setup:c.svcFix,qty:cfg.qty,est:c.est});
+ saveOrder();renderOrder();}
+
+/* PACKAGING / CARDS */
+const KOMB={packaging:{sets:{'Soft Pouch':'softpouch','Hard Box':'hardbox','Soft Box':'softbox'},keys:{softpouch:['model','material','tali','sise','finishing'],hardbox:['model','construction','finishing','sisi','ukuran'],softbox:['model','construction','finishing','ukuran']},type:{softpouch:'Soft Pouch',hardbox:'Hardbox',softbox:'Softbox'}},cards:{sets:{'Thank You Card':'cards'},keys:{cards:['material','coat','finishing','cut','sise']},type:{cards:'Thank You Card'}}};
+function moqOf(set){return set==='softbox'?M.softboxMOQ:1;}
+function resetKs(setId){ks={set:setId,sel:{},qty:moqOf(setId)>1?moqOf(setId):150,custQty:false,customSize:false,custDims:'',notes:'',gIdx:0,_ph:[]};}
+let ks;resetKs('softpouch');
+function kombUI(tab){const c=KOMB[tab];if(!Object.values(c.sets).includes(ks.set))resetKs(Object.values(c.sets)[0]);
+ if(tab==='cards')return `<div class="sec-label">Thank You Card</div><div id="kombsel"></div>`;
+ const setBtns=Object.entries(c.sets).map(([lbl,id])=>`<div class="chip ${ks.set===id?'active':''}" onclick="kSet('${tab}','${id}')">${lbl}</div>`).join('');
+ return `<div class="sec-label">Packaging</div><div class="field"><label>Type</label><div class="chips">${setBtns}</div></div><div id="kombsel"></div>`;}
+function kSet(tab,id){resetKs(id);renderTab();}
+function kombMatch(tab){const set=ks.set,data=DB[set],keys=KOMB[tab].keys[set];
+ let f=data.filter(r=>keys.every(k=>(k==='sise'||k==='ukuran')&&ks.customSize||!ks.sel[k]||r[k]===ks.sel[k]));
+ if(!f.length&&tab==='cards')f=data.filter(r=>keys.every(k=>k==='finishing'||(k==='sise'&&ks.customSize)||!ks.sel[k]||r[k]===ks.sel[k]));
+ return f.length?f[0]:null;}
+function kombUnit(tab){const m=kombMatch(tab);if(!m)return{m:null};const set=ks.set;
+ let unit,est=false;const sizeKey=set==='softpouch'?'sise':(set==='cards'?'sise':'ukuran');
+ if(set==='cards'){unit=m.t.find(x=>x!=null)||0;}                 // cards flat across tiers
+ else unit=tierVal(m.t,packBracket(ks.qty));
+ if(ks.customSize){const ref=dims(m[sizeKey]).reduce((a,b)=>a*b,1)||1;const cu=dims(ks.custDims).reduce((a,b)=>a*b,1);if(cu>0){unit*=cu/ref;est=true;}}
+ return{m,unit:Math.round(unit),est,sizeKey};}
+function renderKombSel(tab){const set=ks.set,data=DB[set],keys=KOMB[tab].keys[set];const moq=moqOf(set);const sizeKey=keys.includes('sise')?'sise':'ukuran';
+ const typeName=KOMB[tab].type[set];
+ let h='';keys.filter(k=>k!==sizeKey).forEach(k=>{
+  let opts=[...new Set(data.filter(r=>keys.every(k2=>k2===k||((k2==='sise'||k2==='ukuran')&&ks.customSize)||!ks.sel[k2]||r[k2]===ks.sel[k2])).map(r=>r[k]).filter(Boolean))];
+  if(set==='hardbox'&&k==='construction'&&ks.sel.model==='Sliding')opts=opts.filter(o=>o!=='Collapsible'&&o!=='Collapsable');
+  h+=`<div class="field"><label>${EN(k)}</label><select onchange="kPick('${tab}','${k}',this.value)"><option value="">— select —</option>${opts.map(o=>`<option value="${esc(o)}" ${ks.sel[k]===o?'selected':''}>${EN(o)}</option>`).join('')}</select></div>`;});
+ let body='';
+ const r0=kombUnit(tab);
+ const cph=colPhotos(typeName,ks.sel);ks._ph=cph;const mainK=cph.length?cph[ks.gIdx||0]:dummyImg(typeName,CAT_HEX[tab==='cards'?'cards':'packaging']);
+ body+=`<img class="kimg" src="${mainK}" onclick="${cph.length?'openKombLB()':''}" alt="">${cph.length>1?`<div class="gallery">${cph.map((u,i)=>`<img class="gthumb ${(ks.gIdx||0)===i?'active':''}" src="${u}" onclick="ks.gIdx=${i};renderKombSel('${tab}')">`).join('')}</div>`:''}`;
+ body+=`<div class="two">${h}</div>`;
+ // size + custom toggle directly under
+ let uopts=[...new Set(data.filter(r=>keys.every(k2=>k2===sizeKey||!ks.sel[k2]||r[k2]===ks.sel[k2])).map(r=>r[sizeKey]).filter(Boolean))];
+ if(!ks.customSize)body+=`<div class="field"><label>${EN(sizeKey)}</label><select onchange="kPick('${tab}','${sizeKey}',this.value)"><option value="">— select —</option>${uopts.map(o=>`<option value="${esc(o)}" ${ks.sel[sizeKey]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;
+ body+=`<div class="field"><label><input type="checkbox" ${ks.customSize?'checked':''} onchange="kCustom('${tab}',this.checked)" style="width:auto;height:auto;margin-right:6px;vertical-align:middle">Custom size</label>${ks.customSize?`<input style="margin-top:6px" id="kdims" value="${esc(ks.custDims)}" oninput="ks.custDims=this.value;kLive('${tab}')" placeholder="${tab==='cards'?'W x H (cm)':'L x W x H (cm)'}">`:''}</div>`;
+ if(set==='softbox')body+=`<div class="locknote">⚠ Soft Box has a minimum order quantity of 500 pcs.</div>`;
+ if(r0.m){
+  let tierChips='';if(set!=='cards'){tierChips=M.packTiers.map((lbl,i)=>({lbl,i})).filter(o=>M.packTierQty[o.i]>=moq).map(o=>`<div class="tier ${packBracket(ks.qty)===o.i?'active':''}" onclick="kSetQty('${tab}',${M.packTierQty[o.i]})"><div class="tq">${o.lbl}</div><div class="tp">${r0.m.t[o.i]!=null?idr(r0.m.t[o.i]):'-'}</div></div>`).join('');}
+  body+=(set!=='cards'?`<div class="field"><label>Quantity</label><div class="tiers">${tierChips}</div></div>
+   <div class="field"><label>Or other quantity <span class="hint">— cost is estimated${moq>1?', min '+moq:''}</span></label><input type="number" id="kqty" value="${ks.qty}" min="${moq}" oninput="kLive('${tab}')"></div>`:`<div class="note-sm" style="margin-bottom:10px">Thank You Card price is the same across all quantities.</div>`)+
+   `<div class="field"><label>Additional notes</label><textarea oninput="ks.notes=this.value" placeholder="e.g. special colour, finishing request">${esc(ks.notes)}</textarea></div>
+   <div class="livebar"><div><div class="live-l">Estimated cost / unit</div><div class="live-v" id="kLiveV">${idr(r0.unit)}${r0.est?' <span class="est-tag">estimate</span>':''}</div><div class="live-s" id="kLiveS">${EN(r0.m.kombinasi)||''}</div></div>
+    <button class="btn btn-gold" onclick="addKomb('${tab}')">+ Add to order</button></div>`;
+ }else body+=`<div class="muted" style="margin-top:8px">Complete the selections to see the cost.</div>`;
+ const el=document.getElementById('kombsel');if(el)el.innerHTML=body;
+}
+function kLive(tab){let q=parseInt(document.getElementById('kqty')?.value);const moq=moqOf(ks.set);if(q>0){if(q<moq)q=moq;ks.qty=q;ks.custQty=true;}const r=kombUnit(tab);const v=document.getElementById('kLiveV');if(v&&r.m)v.innerHTML=idr(r.unit)+(r.est?' <span class="est-tag">estimate</span>':'');}
+function kPick(tab,key,val){if(val)ks.sel[key]=val;else delete ks.sel[key];ks.gIdx=0;
+ if(ks.set==='hardbox'&&key==='model'&&val==='Sliding'&&(ks.sel.construction==='Collapsible'||ks.sel.construction==='Collapsable'))delete ks.sel.construction;
+ renderKombSel(tab);}
+function kSetQty(tab,q){ks.qty=q;ks.custQty=false;renderKombSel(tab);}
+function kCustom(tab,on){ks.customSize=on;const sk=ks.set==='hardbox'||ks.set==='softbox'?'ukuran':'sise';if(on)delete ks.sel[sk];renderKombSel(tab);}
+function addKomb(tab){const r=kombUnit(tab);if(!r.m)return;const moq=moqOf(ks.set);const qty=tab==='cards'?(ks.custQty?ks.qty:100):(ks.qty<moq?moq:ks.qty);
+ const sz=ks.customSize?('custom '+ks.custDims):(r.m[r.sizeKey]||'');
+ const spec=[EN(r.m.kombinasi),sz?('size '+sz):null,ks.notes?('note: '+ks.notes):null].filter(Boolean).join(' · ');
+ order.push({id:++oid,cat:tab==='cards'?'cards':'packaging',name:KOMB[tab].type[ks.set],sub:'',spec,dim:(ks.customSize?ks.custDims:(r.m[r.sizeKey]||'')),unit:r.unit,setup:0,qty,moq,est:r.est});
+ saveOrder();renderOrder();}
+
+/* ORDER */
+function saveOrder(){localStorage.setItem('rove_order',JSON.stringify(order));if(activeTab==='shipping')renderShipItems();}
+function rmItem(id){order=order.filter(o=>o.id!==id);saveOrder();renderOrder();}
+function setQty(id,v){const o=order.find(x=>x.id===id);let n=parseInt(v);if(o&&n>0){const moq=o.moq||1;if(n<moq){n=moq;alert(o.name+' has a minimum order quantity of '+moq+' pcs.');}o.qty=n;saveOrder();renderOrder();}}
+function clearOrder(){if(confirm('Clear all items?')){order=[];saveOrder();renderOrder();}}
+function clientLine(){const b=[client.enq?'<b>'+client.enq+'</b>':null,client.name||null,client.eventDate?'event '+fmtDate(client.eventDate):null,client.deadline?'deadline '+fmtDate(client.deadline):null].filter(Boolean);return b.length?`<div class="client-line">${b.join(' · ')}</div>`:'';}
+/* auto shipping summary for the Order List — all shown options (computed live, no button needed) */
+function orderShipHTML(){
+ var s=buildShip();
+ var head='<div class="sec-label" style="margin-top:16px">Shipping estimate <span style="font-family:\'DM Sans\';letter-spacing:0;text-transform:none;color:var(--text3)">&mdash; Surabaya &rarr; Melbourne</span></div>';
+ if(s.err)return head+'<div class="note-sm" style="color:var(--text3)">Add catalogue products and complete item weights (Shipping tab) to see the estimate.</div>';
+ var rows='';
+ s.air.forEach(function(a){var cheap=a.total===s.minShown;
+  rows+='<div class="oship-row'+(cheap?' best':'')+'"><div class="oship-n">'+a.carrier+' '+a.name+(cheap?' <span class="tag-cheap">CHEAPEST</span>':'')+'</div><div class="oship-p">'+idr(a.total)+'<span>'+idr(a.perUnit)+'/unit</span></div></div>';});
+ if(s.sea.show){var cheap=s.sea.cheapest;
+  rows+='<div class="oship-row'+(cheap?' best':'')+'"><div class="oship-n">Sea Freight LCL'+(cheap?' <span class="tag-cheap">CHEAPEST</span>':'')+'</div><div class="oship-p">'+idr(s.sea.total)+'<span>'+idr(s.sea.perUnit)+'/unit</span></div></div>';}
+ return head+'<div class="oship">'+rows+'</div><div class="note-sm" style="margin-top:6px">Separate from the product cost above &middot; estimate, to be confirmed by the PM.</div>';
+}
+function renderOrder(){
+ document.getElementById('ordCount').textContent=order.length?`· ${order.length} item${order.length>1?'s':''}`:'';
+ const a=document.getElementById('orderArea');const cl=clientLine();
+ if(!order.length){a.innerHTML=cl+`<div class="order-empty"><div class="i">🧾</div><div style="font-weight:500;color:var(--text2)">No items yet</div><div class="muted" style="margin-top:4px">Pick a product, packaging &amp; card from the catalogue, then “Add to order”.</div></div>`;return;}
+ let tc=0,rows='',anyEst=false;
+ order.forEach(o=>{const lc=o.unit*o.qty+(o.setup||0);tc+=lc;if(o.est)anyEst=true;
+  rows+=`<tr><td><div class="oi-name">${o.name}<span class="oi-cat" style="background:${catColor[o.cat]}">${o.cat}</span>${o.est?'<span class="est-tag">est</span>':''}</div>${o.sub?`<div class="oi-spec">${o.sub}</div>`:''}${o.spec?`<div class="oi-spec">${o.spec}</div>`:''}${o.setup?`<div class="oi-spec">+ ${idr(o.setup)} one-off</div>`:''}</td>
+   <td class="mono">${idr(o.unit)}</td><td><input class="oi-qty" type="number" value="${o.qty}" min="${o.moq||1}" onchange="setQty(${o.id},this.value)">${o.moq>1?`<div class="oi-spec">min ${o.moq} pcs</div>`:''}</td>
+   <td class="mono">${idr(lc)}</td><td><button class="oi-x" onclick="rmItem(${o.id})">✕</button></td></tr>`;});
+ a.innerHTML=cl+`<table class="otable"><thead><tr><th>Product</th><th>Cost / pc</th><th>Qty</th><th>Total cost</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+  <div class="tot"><div class="tot-row grand"><span>Total estimated cost</span><span class="mono">${idr(tc)}</span></div></div>
+  ${orderShipHTML()}
+  <div class="confirm-note">✓ Send to the Project Manager for confirmation before quoting.${anyEst?' Items marked <b>est</b> are estimates to be checked.':''}</div>
+  <div class="order-acts"><button class="btn-ghost" onclick="exportPDF()">⬇ Export PDF</button><button class="btn-ghost" onclick="clearOrder()">Clear all items</button></div>`;
+}
+function fmtC(n,cur){return cur==='AUD'?audF(n):rpF(n);}
+/* shipping options as a flat list (Indoshipping Regular, Economy, Sea) for the PDF */
+function shipOpts(s){
+ var opts=s.air.map(function(a){return {label:a.carrier+' — '+a.name+(a.est?' (est)':''),transit:a.transit,total:a.total,perUnit:a.perUnit,cheapest:a.total===s.minShown};});
+ if(s.sea.show)opts.push({label:'Sea Freight LCL',transit:'18-25 days',total:s.sea.total,perUnit:s.sea.perUnit,cheapest:s.sea.cheapest});
+ return opts;
+}
+function postQuote(){
+ try{
+  if(!window.__TOKEN||!order.length)return;
+  var tc=order.reduce(function(a,o){return a+o.unit*o.qty+(o.setup||0);},0);
+  var shipOption='(products only)',shipTotal=0;
+  try{var s=buildShip();if(s&&!s.err){var opts=shipOpts(s);var ch=opts.filter(function(o){return o.cheapest;})[0]||opts[0];if(ch){shipOption=ch.label;shipTotal=ch.total;}}}catch(_){}
+  var q={enq:client.enq||'',client:client.name||'',eventDate:client.eventDate||'',deadline:client.deadline||'',
+   totalProduk:Math.round(tc),shipOption:shipOption,shipTotal:Math.round(shipTotal),grandTotal:Math.round(tc+shipTotal),
+   audRate:RATES.aud,note:'',
+   items:order.map(function(o){return {name:o.name+(o.sub?' / '+o.sub:''),cat:o.cat,spec:o.spec||'',qty:o.qty,unit:Math.round(o.unit),subtotal:Math.round(o.unit*o.qty+(o.setup||0))};})};
+  fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({t:window.__TOKEN,action:'quote',quote:q})}).catch(function(){});
+ }catch(_){}
+}
+function exportPDF(){
+ postQuote();
+ if(!(window.jspdf&&window.jspdf.jsPDF)){window.print();return;}
+ var jsPDF=window.jspdf.jsPDF;var doc=new jsPDF({unit:'pt',format:'a4'});
+ drawCostPage(doc,'IDR');           /* page 1 — IDR */
+ doc.addPage();drawCostPage(doc,'AUD');  /* page 2 — AUD (separate) */
+ doc.save(pdfFileName()+'.pdf');
+}
+function drawCostPage(doc,cur){
+ var tc=0;
+ var body=order.map(function(o,i){var lc=o.unit*o.qty+(o.setup||0);tc+=lc;return [String(i+1),o.name+(o.est?' (est)':'')+(o.sub?' / '+o.sub:'')+(o.spec?'\n'+o.spec:''),String(o.qty),fmtC(o.unit,cur),fmtC(lc,cur)];});
+ doc.setFontSize(16);doc.setTextColor(35,58,44);doc.text('Rove — Cost Estimate   ·   '+cur,40,46);
+ doc.setFontSize(10);doc.setTextColor(120);
+ doc.text('Enquiry: '+(client.enq||'-')+'    ·    Client: '+(client.name||'-'),40,64);
+ doc.text('Event: '+(fmtDate(client.eventDate)||'-')+'    ·    Delivery deadline: '+(fmtDate(client.deadline)||'-'),40,78);
+ doc.text('Estimated cost for Project Manager confirmation (not a sell price).'+(cur==='AUD'?('    ·    A$ 1 = Rp '+RATES.aud.toLocaleString('en-AU')):''),40,92);
+ doc.autoTable({startY:104,head:[['#','Product','Qty','Cost/pc','Total']],body:body,styles:{fontSize:9,cellPadding:5,valign:'top'},headStyles:{fillColor:[37,52,42],textColor:255},columnStyles:{0:{cellWidth:22},2:{halign:'right'},3:{halign:'right'},4:{halign:'right'}}});
+ var y=doc.lastAutoTable.finalY+16;doc.setFontSize(12);doc.setTextColor(45,106,79);
+ doc.text('Total estimated cost (products): '+fmtC(tc,cur),40,y);
+ var s=buildShip();
+ if(!s.err){
+  y+=24;doc.setFontSize(12);doc.setTextColor(36,82,122);
+  doc.text('Shipping estimate — Surabaya -> Melbourne',40,y);
+  y+=14;doc.setFontSize(9);doc.setTextColor(120);
+  doc.text(s.nb+' x '+s.box.size+' carton ('+s.box.L+'x'+s.box.W+'x'+s.box.H+' cm)  ·  Chargeable '+s.chargeable.toFixed(2)+' kg  ·  '+s.cbm.toFixed(3)+' CBM  ·  '+s.totalUnits.toLocaleString('en-AU')+' units  ·  packing +'+Math.round((s.pf-1)*100)+'%',40,y);
+  var opts=shipOpts(s);
+  var sbody=opts.map(function(o){return [o.label+(o.cheapest?'  [cheapest]':''),o.transit,fmtC(o.total,cur),fmtC(o.perUnit,cur)];});
+  doc.autoTable({startY:y+8,head:[['Carrier / Service','Transit','Shipping total','/unit']],body:sbody,styles:{fontSize:9,cellPadding:5},headStyles:{fillColor:[36,82,122],textColor:255},columnStyles:{2:{halign:'right'},3:{halign:'right'}}});
+  y=doc.lastAutoTable.finalY+16;doc.setFontSize(11);doc.setTextColor(45,106,79);
+  doc.text('Estimated grand total — products + shipping:',40,y);
+  var gbody=opts.map(function(o){return ['via '+o.label,fmtC(tc,cur)+'  +  '+fmtC(o.total,cur),fmtC(tc+o.total,cur)];});
+  doc.autoTable({startY:y+6,head:[['Option','Products + Shipping','Grand total']],body:gbody,styles:{fontSize:9,cellPadding:5},headStyles:{fillColor:[45,106,79],textColor:255},columnStyles:{1:{halign:'right'},2:{halign:'right'}}});
+  y=doc.lastAutoTable.finalY+12;doc.setFontSize(8);doc.setTextColor(140);
+  doc.text('Shipping is a port-to-port reference estimate (Sea Freight); excludes AU GST/customs, last-mile, insurance & fuel surcharge. Only Indoshipping + Sea shown. Confirm with carrier & PM.',40,y,{maxWidth:515});
+ }else{
+  y+=20;doc.setFontSize(9);doc.setTextColor(150);
+  doc.text('Shipping: open the Shipping tab and complete any missing item weights to include a freight estimate.',40,y,{maxWidth:515});
+ }
+}
+function properCase(s){return String(s||'').toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());}
+function pdfFileName(){
+ const enq=String(client.enq||'').trim();const num=(enq.match(/\d+/)||[''])[0];
+ const enqStr=num?('ENQ'+num.padStart(4,'0')):(enq?enq.toUpperCase():'ENQ');
+ const name=properCase(client.name||'').trim();
+ return (enqStr+(name?'_'+name:'')).replace(/[\\/:*?"<>|]+/g,'').replace(/\s+$/,'')||'Rove Estimate';
+}
+
+
+/* ════════════════════════════════════════════════════════════════
+   SHIPPING TAB — Surabaya -> Melbourne (port to port)
+   Full vendor memory preserved. SHOW_CARRIER_IDS controls display:
+   DHL / UPS / Lion / Rayspeed stay in the engine, hidden.
+   ════════════════════════════════════════════════════════════════ */
+var SHOW_CARRIER_IDS=['indo'];
+var SHOW_SEA=true;
+var _shipDone=false;           /* whether a shipping estimate is currently displayed (FX rates now live in RATES) */
+var CARTON_UTILIZATION=0.80;   /* mixed-carton fill efficiency */
+
+var RATE_TABLES={
+ dhl_retail:[[0.5,950000],[1,950000],[2,760000],[3,700000],[5,640000],[10,575000],[15,535000],[20,505000],[30,475000],[50,450000],[70,430000],[999,415000]],
+ dhl_acc30:[[0.5,665000],[1,665000],[2,532000],[3,490000],[5,448000],[10,402000],[15,374000],[20,353000],[30,332000],[50,315000],[70,301000],[999,290000]],
+ dhl_acc40:[[0.5,570000],[1,570000],[2,456000],[3,420000],[5,384000],[10,345000],[15,321000],[20,303000],[30,285000],[50,270000],[70,258000],[999,249000]],
+ ups_retail:[[0.5,900000],[1,900000],[2,720000],[5,580000],[10,520000],[20,475000],[50,440000],[999,410000]],
+ ups_acc25:[[0.5,675000],[1,675000],[2,540000],[5,435000],[10,390000],[20,356000],[50,330000],[999,307000]],
+ indo_reg:[[0.5,454000],[1,454000],[2,390000],[5,355000],[10,320000],[20,285000],[30,260000],[50,235000],[999,215000]],
+ indo_econ:[[0.5,300000],[1,300000],[2,260000],[5,235000],[10,210000],[20,190000],[30,170000],[50,155000],[999,140000]],
+ lion_reg:[[0.5,320000],[1,320000],[3,285000],[5,260000],[10,235000],[20,215000],[30,195000],[999,180000]],
+ rayspeed_est:[[0.5,280000],[1,280000],[3,240000],[5,215000],[10,190000],[20,170000],[50,150000],[999,135000]]
+};
+function tieredCost(kg,tid){var tbl=RATE_TABLES[tid];var kgC=Math.ceil(kg*2)/2;var rate=tbl[tbl.length-1][1];for(var i=0;i<tbl.length;i++){if(kgC<=tbl[i][0]){rate=tbl[i][1];break;}}return Math.max(Math.round(kgC*rate),tbl[0][1]);}
+var SHIP_CARRIERS=[
+ {id:'dhl',name:'DHL Express',services:[
+  {tid:'dhl_retail',name:'Worldwide (Retail)',transit:'2-4 business days',div:5000},
+  {tid:'dhl_acc30',name:'Worldwide (Account -30%)',transit:'2-4 business days',div:5000},
+  {tid:'dhl_acc40',name:'Worldwide (Account -40%)',transit:'2-4 business days',div:5000}]},
+ {id:'ups',name:'UPS',services:[
+  {tid:'ups_retail',name:'Worldwide Saver (Retail)',transit:'3-5 business days',div:5000},
+  {tid:'ups_acc25',name:'Worldwide Saver (Acc -25%)',transit:'3-5 business days',div:5000}]},
+ {id:'indo',name:'Indoshipping',services:[
+  {tid:'indo_reg',name:'Regular',transit:'4-5 business days',div:5000},
+  {tid:'indo_econ',name:'Economy',transit:'7-14 business days',div:6000}]},
+ {id:'lion',name:'Lion Parcel',services:[
+  {tid:'lion_reg',name:'INTERPACK Regular',transit:'8-14 business days',div:5000}]},
+ {id:'ray',name:'Rayspeed Asia',services:[
+  {tid:'rayspeed_est',name:'Express Air (estimate)',transit:'7-14 business days',div:6000,est:true}]}
+];
+var SHIP_BOXES=[
+ {size:'XS',L:20,W:20,H:16,wg:200},
+ {size:'S',L:35,W:32,H:20,wg:350},
+ {size:'M',L:54,W:34,H:26,wg:500},
+ {size:'L',L:74,W:50,H:46,wg:800}
+];
+
+/* Unit weights (grams) per product, keyed by Rove HQ name.
+   Source: live "Database Product" Google Sheet, column "Berat Produk (gram)" (updated 2026-06-26 — all 66 products).
+   Anything not listed falls back to the editable weight input. */
+var KNOWN_WG={
+ 'Adjustable Wine Holder':410,'Daisy Luggage Tag':45,'Dundee Luggage Tag':45,'Eyeglasses Case':65,
+ 'Irvine Card Wallet':45,'Alkmaar Keychain':40,'Nara Passport Wallet':105,'Kiev Keycase':50,
+ 'Neuss Passport Cover':105,'Roseville Pouch':250,'Coaster Set for Capitol Hill':210,'Wine Holder':65,
+ 'Tray Set for Hucraft':235,'Rason Pouch':150,'Denmark Luggage Tag':45,'Gale Keywallet':100,
+ 'Hanoi Card Case':100,'Idaho Card Wallet':45,'Jena Keywallet':65,'London Travel Wallet':160,
+ 'Manado Clutch':160,'Nagasaki Passport Cover':105,'Queensland Cable Clip':16,'Riga Mini Pouch':70,
+ 'Rome Pouch':130,'Tokyo Compact Mirror':75,'Animal Keychain':10,'Ankara Key Chain':25,
+ 'Dortmund Luggage Tag':45,'Durham Luggage Tag':45,'Erie ID Tag':45,'Ginza Bifold Card Wallet':45,
+ 'Hungary Card Case':45,'Ibiza Card Wallet':45,'Jericho Key Wallet':65,'Jinan Key Wallet':65,
+ 'Kobe Key Case':30,'Nagano Passport Wallet':105,'Napa Passport Wallet':105,'Richmond Toiletries':270,
+ 'Ube Tray':110,'Voodoo Doll (M)':60,'Coaster for Botanique':27,'Desk Mat for Optimus Event Organizer':350,
+ 'Dog Shaped Bag for Rove HQ':530,
+ 'Gift Set for Honda CR-V':450,'Gift Set for Lightfoot':400,'Gift Set for Styloz x Rove Gift':300,
+ 'Harvard Card Case for Google':70,'Iriga Card Wallet for Netflix':65,'Jewelry Box for Frank & Co':80,
+ 'Keychain for Frank & Co':50,'Keychain for Gordon Ramsay Fish & Chip':20,'Keychain for Gordron Ramsay Street Burger':20,
+ 'Lanyard for Artax Indonesia':25,'Menu Book for Bask Gili':340,'Menu Book for Botanique':175,
+ 'Photo Frame for Andre & Mercia':350,'Small Pouch for Thomas & Alesya':15,'Tech Organizer for Intiland':520,
+ 'Tote Bag for Imey Liem':70,'Tote Bag for Lightfoot':70,'Totebag for Thee Marloes':70,
+ 'Travel Size Jewelry Box for Rove AU':150,'Tray for Andre & Mercia':90,'Weaved Tray for Modico':130
+};
+/* default weights for packaging & cards (per pc, grams) — empty packaging, light. Editable per-item.
+   Estimates (not in DB): soft pouch fabric, folding soft box light, rigid hard box heaviest, card thin. */
+var PACK_WG={'Soft Pouch':15,'Hardbox':180,'Softbox':55,'Thank You Card':6};
+
+var shipW=JSON.parse(localStorage.getItem('rove_ship_w')||'{}');   /* user-entered weights, by item name */
+function saveShipW(){localStorage.setItem('rove_ship_w',JSON.stringify(shipW));}
+
+function shipKey(o){return o.cat+':'+o.name+(o.sub?'/'+o.sub:'');}
+function findProd(o){
+ for(var i=0;i<DB.products.length;i++){var p=DB.products[i];
+  if(p.hq===o.name||p.au===o.name||p.hq===o.sub||p.au===o.sub)return p;}
+ return null;}
+function itemDims(o){
+ if(o.cat!=='product')return null;            /* packaging & cards: weight only — NOT counted in the carton volume */
+ var p=findProd(o);if(!p)return null;
+ var d=dims(p.size);
+ if(d.length>=3)return [d[0],d[1],d[2]];
+ if(d.length===2)return [d[0],d[1],1];
+ return null;}
+/* DISPLAY-only dimensions (incl. packaging, read from the chosen size) — does NOT affect the volume/carton calc */
+function dispDim(o){
+ var d=itemDims(o);
+ if(d)return d[0]+' &times; '+d[1]+' &times; '+d[2]+' cm';
+ var m=(o.dim||o.spec||'').match(/(\d[\d.,]*\s*[x×]\s*\d[\d.,]*(?:\s*[x×]\s*\d[\d.,]*)?)/i);
+ if(m)return m[1].replace(/\s*[x×]\s*/gi,' &times; ')+' cm';
+ return '<span style="color:var(--text3)">&mdash; weight only</span>';
+}
+/* numeric dims [L,W,H] for a packaging box (Hard/Soft Box) — read from the chosen size */
+function packDimsArr(o){
+ var s=o.dim||((o.spec||'').match(/(\d[\d.,]*\s*[x×]\s*\d[\d.,]*(?:\s*[x×]\s*\d[\d.,]*)?)/i)||[])[1]||'';
+ if(!s)return null;
+ var d=dims(s);
+ if(d.length>=3)return [d[0],d[1],d[2]];
+ if(d.length===2)return [d[0],d[1],1];
+ return null;
+}
+function itemDefaultWg(o){
+ if(o.cat==='product'){var p=findProd(o);if(p&&KNOWN_WG[p.hq]!=null)return KNOWN_WG[p.hq];return null;}
+ return PACK_WG[o.name]!=null?PACK_WG[o.name]:null;}
+function itemWg(o){
+ var k=shipKey(o);
+ if(shipW[k]!=null&&shipW[k]>0)return shipW[k];
+ return itemDefaultWg(o);}
+function setItemWg(key,v){
+ var n=parseFloat(v);
+ if(n>0)shipW[key]=n;else delete shipW[key];
+ saveShipW();
+ renderShipItems();calcShipping();renderOrder();   /* auto-update tab + order-list summary */
+}
+
+/* currency handled globally via idr()/CUR; rates & packing factor live in RATES (header toggle) */
+function pfOpt(v,label){return '<option value="'+v+'"'+(Math.abs((RATES.pf||1.1)-v)<1e-9?' selected':'')+'>'+label+'</option>';}
+
+function shipUI(){
+ return '<div class="sec-label">Shipping estimate &mdash; Surabaya &rarr; Melbourne</div>'
+  +'<div class="two">'
+  +'<div class="field"><label>Packing factor <span class="hint">(buffer weight)</span></label><select onchange="RATES.pf=parseFloat(this.value);saveRates();calcShipping();renderOrder()" id="shipPf">'
+  +pfOpt(1.0,'0%')+pfOpt(1.05,'5%')+pfOpt(1.10,'10% &mdash; default')+pfOpt(1.15,'15%')+pfOpt(1.20,'20%')+'</select></div>'
+  +'<div class="field"><label>Display currency</label><div class="note-sm" style="margin-top:9px">Switch <b>IDR / AUD</b> with the button in the header &mdash; it converts the whole estimate.</div></div>'
+  +'</div>'
+  +'<div id="shipItems"></div>'
+  +'<div id="shipResults"></div>';
+}
+
+function renderShipItems(){
+ var el=document.getElementById('shipItems');if(!el)return;
+ if(!order.length){
+  el.innerHTML='<div class="order-empty"><div class="i">&#128230;</div><div style="font-weight:500;color:var(--text2)">No items in the order yet</div><div class="muted" style="margin-top:4px">Add products from the catalogue first &mdash; the shipping estimate reads the ORDER LIST.</div></div>';
+  return;}
+ var rows='',missing=0;
+ for(var i=0;i<order.length;i++){
+  var o=order[i];var d=itemDims(o);var wg=itemWg(o);var k=shipKey(o);
+  if(wg==null)missing++;
+  rows+='<tr><td><div class="oi-name">'+o.name+'<span class="oi-cat" style="background:'+(catColor[o.cat]||'#666')+'">'+o.cat+'</span></div>'
+   +(o.sub?'<div class="oi-spec">'+o.sub+'</div>':'')
+   +'</td>'
+   +'<td class="mono" style="white-space:nowrap">'+dispDim(o)+'</td>'
+   +'<td class="mono">'+o.qty+'</td>'
+   +'<td><input class="ship-w'+(wg==null?' missing':'')+'" type="number" min="1" step="1" placeholder="?" value="'+(wg!=null?wg:'')+'" onchange="setItemWg(\''+k.replace(/'/g,"\\'")+'\',this.value)"></td></tr>';
+ }
+ el.innerHTML='<div class="sec-label" style="margin-top:14px">Items &amp; weights <span style="font-family:\'DM Sans\';letter-spacing:0;text-transform:none;color:var(--text3)">&mdash; grams per unit, editable</span></div>'
+  +'<table class="ship-tbl"><thead><tr><th>Item</th><th>Dimensions / unit</th><th>Qty</th><th>Weight (g)</th></tr></thead><tbody>'+rows+'</tbody></table>'
+  +(missing?'<div class="note-sm" style="color:var(--amber);margin-bottom:10px">&#9888; '+missing+' item'+(missing>1?'s':'')+' missing weight &mdash; fill in the orange field(s). Saved automatically; the estimate updates as you type.</div>':'');
+}
+
+/* mixed-carton optimisation: combine total effective volume of ALL products,
+   pick carton size minimising cost (indo_econ proxy) */
+function shipPlan(pf){
+ /* NESTING / outer-container model — volume is driven by the outermost packaging present:
+    Hard Box > Soft Box > (Soft Pouch / Product) > Card. Soft Pouch & Card always nest inside
+    (weight only). max() with product volume guards against a product too big for its box.
+    Weight always sums ALL items. */
+ var totWg=0,missing=[],hbVol=0,sbVol=0,prodVol=0;
+ for(var i=0;i<order.length;i++){
+  var o=order[i];var wg=itemWg(o);
+  if(wg==null){missing.push(o.name);continue;}
+  totWg+=o.qty*wg;
+  if(o.cat==='product'){var d=itemDims(o);if(d)prodVol+=o.qty*d[0]*d[1]*d[2];}
+  else if(o.cat==='packaging'&&o.name==='Hardbox'){var hb=packDimsArr(o);if(hb)hbVol+=o.qty*hb[0]*hb[1]*hb[2];}
+  else if(o.cat==='packaging'&&o.name==='Softbox'){var sb=packDimsArr(o);if(sb)sbVol+=o.qty*sb[0]*sb[1]*sb[2];}
+  /* Soft Pouch & Thank You Card: weight only — they nest inside the outer item */
+ }
+ if(missing.length)return{err:'Missing weight for: '+missing.join(', ')+'. Fill in the weight fields above.'};
+ var containerVol=hbVol>0?hbVol:(sbVol>0?sbVol:0);   /* Hard Box wins over Soft Box */
+ var totVol=Math.max(containerVol,prodVol);            /* outer container, product as safety floor */
+ if(!(totVol>0))return{err:'No item with dimensions in the order. Add a catalogue product or a box.'};
+ var volBasis=(containerVol>0&&containerVol>=prodVol)?(hbVol>0?'Hard Box (outer)':'Soft Box (outer)'):'Product';
+ var effVol=totVol/CARTON_UTILIZATION;
+ var best=null,bc=Infinity;
+ for(var b=0;b<SHIP_BOXES.length;b++){
+  var box=SHIP_BOXES[b];var bv=box.L*box.W*box.H;
+  var nb=Math.max(1,Math.ceil(effVol/bv));
+  var actKg=(totWg+nb*box.wg)/1000*pf;
+  var volKg=nb*bv/5000;
+  var cost=tieredCost(Math.max(actKg,volKg),'indo_econ');
+  if(cost<bc){bc=cost;best={box:box,nb:nb,actKg:actKg,volKg5:volKg,totWg:totWg,totVol:totVol,volBasis:volBasis};}
+ }
+ return best;
+}
+
+/* structured shipping result (shared by the on-screen estimate and the PDF) */
+function buildShip(){
+ var pf=RATES.pf||1.1;
+ var plan=shipPlan(pf);
+ if(plan.err)return{err:plan.err};
+ var box=plan.box,nb=plan.nb,actKg=plan.actKg;
+ var totalUnits=0;for(var i=0;i<order.length;i++)totalUnits+=order[i].qty;
+ var cbm=Math.max(nb*(box.L*box.W*box.H)/1000000,0.1);
+ var seaTotal=Math.round((cbm*(RATES.seaUsdCbm||0)+(RATES.seaFix||0))*RATES.usd);
+ var chargeable=Math.max(actKg,plan.volKg5);
+ var air=[],ci,si;
+ for(ci=0;ci<SHIP_CARRIERS.length;ci++){
+  if(SHOW_CARRIER_IDS.indexOf(SHIP_CARRIERS[ci].id)===-1)continue;
+  var carrier=SHIP_CARRIERS[ci];
+  for(si=0;si<carrier.services.length;si++){
+   var svc=carrier.services[si];var vk=nb*(box.L*box.W*box.H)/svc.div;var bk=Math.max(actKg,vk);
+   var total=tieredCost(bk,svc.tid);
+   air.push({carrier:carrier.name,name:svc.name,transit:svc.transit,est:!!svc.est,billKg:bk,total:total,perUnit:Math.round(total/totalUnits)});
+  }
+ }
+ var at=air.map(function(a){return a.total;});
+ var minAir=air.length?Math.min.apply(null,at):Infinity;
+ var minShown=Math.min.apply(null,at.concat(SHOW_SEA?[seaTotal]:[]));
+ return {box:box,nb:nb,chargeable:chargeable,cbm:cbm,totalUnits:totalUnits,pf:pf,air:air,
+  sea:{show:SHOW_SEA,total:seaTotal,perUnit:Math.round(seaTotal/totalUnits),cheapest:SHOW_SEA&&seaTotal===minShown},
+  minShown:minShown,minAir:minAir};
+}
+
+function calcShipping(){
+ var pf=RATES.pf||1.1;
+ var res=document.getElementById('shipResults');if(!res)return;
+ var plan=shipPlan(pf);
+ if(plan.err){res.innerHTML='<div class="vol-alert high"><span>&#9888;&#65039;</span><div>'+plan.err+'</div></div>';_shipDone=false;return;}
+ var box=plan.box,nb=plan.nb,actKg=plan.actKg;
+ var totalUnits=0;for(var i=0;i<order.length;i++)totalUnits+=order[i].qty;
+ var volRatio=plan.totWg>0?(plan.totVol/5*1)/plan.totWg:0;  /* vol g (div5000*1000=÷5) vs actual g */
+ var cbm=Math.max(nb*(box.L*box.W*box.H)/1000000,0.1);
+ var seaTotal=Math.round((cbm*(RATES.seaUsdCbm||0)+(RATES.seaFix||0))*RATES.usd);
+
+ /* prices for DISPLAYED carriers only (others stay in engine) */
+ var shown=[],ci,si,svc,vk,bk;
+ for(ci=0;ci<SHIP_CARRIERS.length;ci++){
+  if(SHOW_CARRIER_IDS.indexOf(SHIP_CARRIERS[ci].id)===-1)continue;
+  for(si=0;si<SHIP_CARRIERS[ci].services.length;si++){
+   svc=SHIP_CARRIERS[ci].services[si];
+   vk=nb*(box.L*box.W*box.H)/svc.div;
+   shown.push(tieredCost(Math.max(actKg,vk),svc.tid));
+  }}
+ var minShown=Math.min.apply(null,shown.concat(SHOW_SEA?[seaTotal]:[]));
+ var minAir=shown.length?Math.min.apply(null,shown):Infinity;
+
+ var out='';
+ if(volRatio>=10)out+='<div class="vol-alert extreme"><span>&#128680;</span><div><b>Extremely high volumetric weight ('+volRatio.toFixed(1)+'&times;)</b> &mdash; Sea Freight LCL strongly recommended.</div></div>';
+ else if(volRatio>=4)out+='<div class="vol-alert high"><span>&#9888;&#65039;</span><div><b>High volumetric weight ('+volRatio.toFixed(1)+'&times;)</b> &mdash; consider Sea LCL for larger quantities.</div></div>';
+
+ out+='<div class="sec-label" style="margin-top:16px">Combined shipment plan</div>';
+ out+='<div class="incl" style="margin-top:0;margin-bottom:12px"><div class="l"><span>Carton</span><span class="mono">'+nb+' &times; '+box.size+' ('+box.L+'&times;'+box.W+'&times;'+box.H+' cm)</span></div>'
+  +'<div class="l"><span>Total units (all items)</span><span class="mono">'+totalUnits.toLocaleString('en-AU')+' pcs</span></div>'
+  +'<div class="l"><span>Carton fill efficiency</span><span class="mono">'+Math.round(CARTON_UTILIZATION*100)+'%</span></div>'
+  +'<div class="l"><span>Volume from</span><span class="mono">'+(plan.volBasis||'Product')+'</span></div></div>'
+  +'<div class="note-sm" style="margin:-4px 0 12px;color:var(--text3)">Contents nest into the outer item &mdash; added as weight, not volume.</div>';
+
+ out+='<div class="wgrid">';
+ out+='<div class="wcard"><div class="wcard-l">Actual Weight</div><div class="wcard-v">'+actKg.toFixed(2)+'<span> kg</span></div><div class="wcard-s">items + cartons + packing '+Math.round((pf-1)*100)+'%</div></div>';
+ out+='<div class="wcard"><div class="wcard-l">Volumetric (&divide;5000)</div><div class="wcard-v">'+plan.volKg5.toFixed(2)+'<span> kg</span></div><div class="wcard-s">'+nb+' carton'+(nb>1?'s':'')+'</div></div>';
+ out+='<div class="wcard primary"><div class="wcard-l">Chargeable Weight</div><div class="wcard-v">'+Math.max(actKg,plan.volKg5).toFixed(2)+'<span> kg</span></div><div class="wcard-s">'+(plan.volKg5>actKg?'volumetric applies':'actual applies')+'</div></div>';
+ out+='<div class="wcard"><div class="wcard-l">Sea Volume</div><div class="wcard-v">'+cbm.toFixed(3)+'<span> CBM</span></div><div class="wcard-s">min 0.1 CBM</div></div>';
+ out+='</div>';
+
+ /* displayed carriers */
+ for(ci=0;ci<SHIP_CARRIERS.length;ci++){
+  var carrier=SHIP_CARRIERS[ci];
+  if(SHOW_CARRIER_IDS.indexOf(carrier.id)===-1)continue;
+  out+='<div class="ship-carrier"><div class="ship-chead"><div class="ship-cname">'+carrier.name+' <span>&mdash; Air Freight</span></div><span class="ship-badge">AIR</span></div>';
+  for(si=0;si<carrier.services.length;si++){
+   svc=carrier.services[si];
+   vk=nb*(box.L*box.W*box.H)/svc.div;
+   bk=Math.max(actKg,vk);
+   var total=tieredCost(bk,svc.tid);
+   var cheap=(total===minShown);
+   out+='<div class="ship-row'+(cheap?' cheapest':'')+'">'
+    +'<div><div class="ship-sname">'+svc.name+(cheap?' <span class="tag-cheap">CHEAPEST</span>':'')+(svc.est?' <span class="est-tag">est</span>':'')+'</div>'
+    +'<div class="ship-smeta">Transit '+svc.transit+' &middot; Chargeable '+bk.toFixed(2)+' kg</div></div>'
+    +'<div class="ship-price"><div class="ship-tot'+(cheap?' best':'')+'">'+idr(total)+'</div><div class="ship-pu">'+idr(Math.round(total/totalUnits))+'/unit</div></div></div>';
+  }
+  out+='</div>';
+ }
+
+ /* sea */
+ if(SHOW_SEA){
+  var seaCheap=(seaTotal===minShown);
+  out+='<div class="sea-card"><div class="sea-head"><div style="font-size:21px">&#128674;</div><div>'
+   +'<div class="sea-title">Sea Freight LCL'+(seaCheap?' <span class="tag-cheap">CHEAPEST</span>':'')+' <span class="ptp">&mdash; Port to Port</span></div>'
+   +'<div class="sea-sub">Transit 18-25 days &middot; '+cbm.toFixed(3)+' CBM &middot; consolidated</div></div></div>'
+   +'<div class="sea-body"><div><div class="sea-fwd">MCL Trans / Linustrans / DHL Global Forwarding / Samudera Indonesia</div>'
+   +'<div class="sea-fwdn">USD '+RATES.seaUsdCbm+'/CBM ocean + USD '+RATES.seaFix+' fixed handling &middot; port-to-port estimate</div></div>'
+   +'<div><div class="sea-pr">'+idr(seaTotal)+'</div><div class="sea-pru">'+idr(Math.round(seaTotal/totalUnits))+'/unit</div></div></div>';
+  if(minAir>seaTotal&&isFinite(minAir)){
+   out+='<div class="sea-sav">&#128161; <b>Saving vs cheapest air: '+idr(minAir-seaTotal)+'</b> per shipment &middot; '+Math.round((minAir-seaTotal)/minAir*100)+'% cheaper</div>';
+  }
+  out+='</div>';
+ }
+
+ out+='<div class="confirm-note">&#10003; Shipping estimate to be confirmed by the Project Manager before quoting.</div>';
+
+ res.innerHTML=out;
+ res.scrollIntoView({behavior:'smooth',block:'start'});
+ _shipDone=true;
+}
+
+
+/* ===== PRODUCTION LOADER — live data from backend + passcode lock ===== */
+const BACKEND_URL='https://script.google.com/macros/s/AKfycbyQVypvgdSOgzsd_1lCRqzWHVC8Y9JqUGMPlzAI4I4--z3x9TqfAGPnSkCtU_TpVXShhw/exec';
+const LS_TOK='rove_est_tok', LS_CACHE='rove_est_cache';
+function buildDB(r){
+  const S=window.ROVE_STATIC||{}, pe=S.prodExtras||{}, se=S.svcExtras||{};
+  return {
+    products:(r.products||[]).map(p=>Object.assign({},p,pe[p.hq]||{})),
+    softpouch:r.softpouch||[], hardbox:r.hardbox||[], softbox:r.softbox||[], cards:r.cards||[],
+    services:(r.services||[]).map(s=>Object.assign({},s,se[s.name]||{})),
+    collateral:S.collateral||[], mat:S.mat||{}, giftsets:S.giftsets||{}, meta:S.meta||{}
+  };
+}
+function boot(){
+  M=DB.meta;
+  DB.collateral.forEach(c=>{(COL[c.type]=COL[c.type]||{});(COL[c.type][c.kind]=COL[c.type][c.kind]||{});COL[c.type][c.kind][colKey(c.value)]=driveThumb(c.photo);});
+  renderTabs();renderTab();renderOrder();syncCurBtn();
+  var a=document.getElementById('audRate');if(a)a.value=RATES.aud;
+}
+function applyData(r){ window.__DATA=r; DB=buildDB(r); boot(); }
+(function(){
+  var ov=document.createElement('div'); ov.id='lockOv';
+  ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#0f172a;color:#e2e8f0;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:20px';
+  ov.innerHTML='<div style="width:100%;max-width:360px;text-align:center">'
+   +'<div style="font-size:26px;font-weight:800;letter-spacing:.5px">ROVE</div>'
+   +'<div style="opacity:.7;margin:4px 0 22px;font-size:13px">Cost Estimator</div>'
+   +'<input id="lockPass" type="password" placeholder="Passcode" autocomplete="current-password" style="width:100%;box-sizing:border-box;padding:13px 14px;border-radius:12px;border:1px solid #334155;background:#1e293b;color:#fff;font-size:16px;outline:none">'
+   +'<button id="lockBtn" style="width:100%;margin-top:12px;padding:13px;border:0;border-radius:12px;background:#6366f1;color:#fff;font-size:15px;font-weight:700;cursor:pointer">Masuk</button>'
+   +'<div id="lockMsg" style="min-height:20px;margin-top:12px;font-size:13px;color:#fca5a5"></div>'
+   +'</div>';
+  document.body.appendChild(ov);
+  var inp=ov.querySelector('#lockPass'), btn=ov.querySelector('#lockBtn'), msg=ov.querySelector('#lockMsg');
+  function setMsg(t,ok){ msg.textContent=t; msg.style.color=ok?'#86efac':'#fca5a5'; }
+  function tryToken(tok){
+    setMsg('Memuat data…',true); btn.disabled=true;
+    return fetch(BACKEND_URL+'?t='+encodeURIComponent(tok)+'&data=1')
+      .then(x=>x.json())
+      .then(j=>{
+        if(!j||j.ok===false||!j.products) throw new Error((j&&j.error)||'Passcode salah / data kosong');
+        localStorage.setItem(LS_TOK,tok); localStorage.setItem(LS_CACHE,JSON.stringify(j));
+        window.__TOKEN=tok; applyData(j); ov.remove();
+      })
+      .catch(e=>{
+        var ct=localStorage.getItem(LS_TOK), cc=localStorage.getItem(LS_CACHE);
+        if(ct===tok && cc){ try{ window.__TOKEN=tok; applyData(JSON.parse(cc)); ov.remove(); return; }catch(_){} }
+        setMsg((''+e.message).slice(0,90)); btn.disabled=false; inp.focus();
+      });
+  }
+  btn.onclick=function(){ var v=inp.value.trim(); if(v) tryToken(v); };
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter') btn.click(); });
+  var saved=localStorage.getItem(LS_TOK);
+  if(saved){ inp.value=saved; tryToken(saved); } else { setTimeout(function(){inp.focus();},100); }
+})();
+</script>
+</body>
+</html>
