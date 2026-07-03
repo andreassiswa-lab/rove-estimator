@@ -199,6 +199,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 
 /* phone tuning — placed last so it overrides base rules */
 @media(max-width:600px){
+ body{overflow-x:hidden}
+ .otable{font-size:11px}
  .header{padding:15px 16px}
  .wrap{padding:13px 12px 70px}
  .two{grid-template-columns:1fr}
@@ -517,7 +519,7 @@ function calcProd(){
 function addProd(){const p=cur,c=cfg._calc;
  const sizeBit=c.slotN?('card slots '+c.slotDesc+' ('+c.newDimStr+')'):((c.sizeMult&&c.sizeMult!==1)?('size '+cfg.newSize):null);
  const bits=[sizeBit,c.matLabel||null,c.featLabel||null,...c.svcNames,cfg.svcDims?('logo '+cfg.svcDims):null,cfg.logoPos?('@ '+cfg.logoPos):null,cfg.notes?('note: '+cfg.notes):null].filter(Boolean);
- order.push({id:++oid,cat:'product',name:p.au||p.hq,sub:(p.au&&p.au!==p.hq)?p.hq:'',spec:bits.join(' · '),unit:c.unit,setup:c.svcFix,qty:cfg.qty,est:c.est});
+ order.push({id:++oid,cat:'product',name:p.au||p.hq,sub:(p.au&&p.au!==p.hq)?p.hq:'',spec:bits.join(' · '),unit:c.unit,setup:c.svcFix,qty:cfg.qty,est:c.est,photos:(p.photos||[]).slice()});
  saveOrder();renderOrder();}
 
 /* PACKAGING / CARDS */
@@ -575,7 +577,7 @@ function kCustom(tab,on){ks.customSize=on;const sk=ks.set==='hardbox'||ks.set===
 function addKomb(tab){const r=kombUnit(tab);if(!r.m)return;const moq=moqOf(ks.set);const qty=tab==='cards'?(ks.custQty?ks.qty:100):(ks.qty<moq?moq:ks.qty);
  const sz=ks.customSize?('custom '+ks.custDims):(r.m[r.sizeKey]||'');
  const spec=[EN(r.m.kombinasi),sz?('size '+sz):null,ks.notes?('note: '+ks.notes):null].filter(Boolean).join(' · ');
- order.push({id:++oid,cat:tab==='cards'?'cards':'packaging',name:KOMB[tab].type[ks.set],sub:'',spec,dim:(ks.customSize?ks.custDims:(r.m[r.sizeKey]||'')),unit:r.unit,setup:0,qty,moq,est:r.est});
+ order.push({id:++oid,cat:tab==='cards'?'cards':'packaging',name:KOMB[tab].type[ks.set],sub:'',spec,dim:(ks.customSize?ks.custDims:(r.m[r.sizeKey]||'')),unit:r.unit,setup:0,qty,moq,est:r.est,ptype:KOMB[tab].type[ks.set],sel:Object.assign({},ks.sel)});
  saveOrder();renderOrder();}
 
 /* ORDER */
@@ -631,12 +633,60 @@ function postQuote(){
   fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({t:window.__TOKEN,action:'quote',quote:q})}).catch(function(){});
  }catch(_){}
 }
-function exportPDF(){
+function driveId(u){if(!u)return '';var m=String(u).match(/[?&]id=([\w-]+)/)||String(u).match(/\/d\/([\w-]+)/);return m?m[1]:'';}
+function collectPhotoJobs(){
+ var jobs=[],seen={};
+ order.forEach(function(o){
+  if(o.cat==='product'){
+   var ph=(o.photos&&o.photos.length)?o.photos:(((DB.products||[]).find(function(p){return (p.au||p.hq)===o.name;})||{}).photos||[]);
+   ph.forEach(function(u,i){var id=driveId(u);if(id&&!seen[id]){seen[id]=1;jobs.push({label:o.name+(ph.length>1?(' ('+(i+1)+')'):''),id:id});}});
+  }else if(o.ptype&&o.sel){
+   var urls=colPhotos(o.ptype,o.sel)||[];var lbl=o.name+(o.spec?(' — '+o.spec.replace(/^[^·]*·\s*/,'')):'');
+   urls.forEach(function(u){var id=driveId(u);if(id&&!seen[id]){seen[id]=1;jobs.push({label:lbl,id:id});}});
+  }
+ });
+ return jobs;
+}
+function fetchImg(id){
+ return fetch(BACKEND_URL+'?t='+encodeURIComponent(window.__TOKEN||'')+'&img='+encodeURIComponent(id))
+  .then(function(r){return r.json();})
+  .then(function(j){if(j&&j.ok&&j.b64){var mime=j.mime||'image/jpeg';return {data:'data:'+mime+';base64,'+j.b64,fmt:/png/i.test(mime)?'PNG':'JPEG'};}return null;})
+  .catch(function(){return null;});
+}
+function drawPhotoPages(doc,imgs){
+ imgs=imgs.filter(function(x){return x&&x.data;});if(!imgs.length)return;
+ var PW=595,PH=842,mg=40,gap=18,cols=2,cellW=(PW-mg*2-gap)/cols,cellH=210,rowH=cellH+16+gap;
+ var rowsPerPage=Math.max(1,Math.floor((PH-70-mg)/rowH)),perPage=cols*rowsPerPage;
+ imgs.forEach(function(im,idx){
+  var pageIdx=Math.floor(idx/perPage),inPage=idx%perPage,r=Math.floor(inPage/cols),c=inPage%cols;
+  if(inPage===0){doc.addPage();doc.setFontSize(14);doc.setTextColor(35,58,44);doc.text('Product & Packaging Photos'+(pageIdx>0?' (cont.)':''),mg,46);}
+  var x=mg+c*(cellW+gap),y=64+r*rowH;
+  try{var pr=doc.getImageProperties(im.data),ar=pr.width/pr.height,w=cellW,h=w/ar;if(h>cellH){h=cellH;w=h*ar;}doc.addImage(im.data,im.fmt||'JPEG',x+(cellW-w)/2,y,w,h);}catch(e){}
+  doc.setFontSize(8);doc.setTextColor(90);doc.text(String(im.label||'').slice(0,60),x,y+cellH+10,{maxWidth:cellW});
+ });
+}
+function showProg(t){
+ var d=document.createElement('div');d.id='pdfProg';
+ d.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,sans-serif';
+ d.innerHTML='<div style="background:#fff;padding:22px 28px;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);text-align:center;max-width:80%"><div class="pgt" style="font-size:14px;font-weight:600;color:#0f172a">'+t+'</div><div style="margin-top:6px;font-size:12px;color:#64748b">Mengambil foto dari server…</div></div>';
+ document.body.appendChild(d);
+ return {set:function(x){var e=d.querySelector('.pgt');if(e)e.textContent=x;},done:function(){d.remove();}};
+}
+async function exportPDF(){
  postQuote();
  if(!(window.jspdf&&window.jspdf.jsPDF)){window.print();return;}
  var jsPDF=window.jspdf.jsPDF;var doc=new jsPDF({unit:'pt',format:'a4'});
  drawCostPage(doc,'IDR');           /* page 1 — IDR */
  doc.addPage();drawCostPage(doc,'AUD');  /* page 2 — AUD (separate) */
+ try{
+  var jobs=collectPhotoJobs();
+  if(jobs.length&&window.__TOKEN){
+   var prog=showProg('Menyiapkan foto 0/'+jobs.length);
+   var imgs=[];
+   for(var i=0;i<jobs.length;i++){var res=await fetchImg(jobs[i].id);imgs.push({label:jobs[i].label,data:res&&res.data,fmt:res&&res.fmt});prog.set('Menyiapkan foto '+(i+1)+'/'+jobs.length);}
+   drawPhotoPages(doc,imgs);prog.done();
+  }
+ }catch(e){var pp=document.getElementById('pdfProg');if(pp)pp.remove();}
  doc.save(pdfFileName()+'.pdf');
 }
 function drawCostPage(doc,cur){
