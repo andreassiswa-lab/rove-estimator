@@ -208,7 +208,8 @@ function doLogin(){
  if(!pw){loginMsg('Isi passcode admin.');return;}
  loginMsg('Memuat data…',true);
  fetch(BACKEND_URL+'?t='+encodeURIComponent(pw)+'&data=1').then(function(r){return r.json();}).then(function(j){
-  if(!j||j.ok===false||!j.products)throw new Error((j&&j.error)||'Passcode salah / data kosong');
+  if(j&&j.ok===false){ localStorage.removeItem(LS_ATOK); document.getElementById('pw').value=''; throw new Error((j.error||'Passcode salah')+' — masukkan lagi.'); }
+  if(!j||!j.products)throw new Error('Data kosong');
   window.__ATOKEN=pw; localStorage.setItem(LS_ATOK,pw);
   applyServer(j); enter();
  }).catch(function(e){loginMsg((''+e.message).slice(0,90));});

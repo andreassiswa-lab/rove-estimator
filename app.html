@@ -1067,14 +1067,16 @@ function applyData(r){ window.__DATA=r; DB=buildDB(r); boot(); }
     return fetch(BACKEND_URL+'?t='+encodeURIComponent(tok)+'&data=1')
       .then(x=>x.json())
       .then(j=>{
-        if(!j||j.ok===false||!j.products) throw new Error((j&&j.error)||'Passcode salah / data kosong');
+        if(j&&j.ok===false){ localStorage.removeItem(LS_TOK); var er=new Error(j.error||'Passcode salah'); er.bad=true; throw er; }
+        if(!j||!j.products) throw new Error('Data kosong');
         localStorage.setItem(LS_TOK,tok); localStorage.setItem(LS_CACHE,JSON.stringify(j));
         window.__TOKEN=tok; applyData(j); ov.remove();
       })
       .catch(e=>{
-        var ct=localStorage.getItem(LS_TOK), cc=localStorage.getItem(LS_CACHE);
-        if(ct===tok && cc){ try{ window.__TOKEN=tok; applyData(JSON.parse(cc)); ov.remove(); return; }catch(_){} }
-        setMsg((''+e.message).slice(0,90)); btn.disabled=false; inp.focus();
+        if(!e.bad){ var ct=localStorage.getItem(LS_TOK), cc=localStorage.getItem(LS_CACHE);
+          if(ct===tok && cc){ try{ window.__TOKEN=tok; applyData(JSON.parse(cc)); ov.remove(); return; }catch(_){} } }
+        setMsg(e.bad?'Passcode salah — masukkan lagi.':('Gagal memuat: '+(''+e.message).slice(0,60)),false);
+        inp.value=''; btn.disabled=false; inp.focus();
       });
   }
   btn.onclick=function(){ var v=inp.value.trim(); if(v) tryToken(v); };
