@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rove Admin — Prototype</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--side:#1e293b;--side2:#0f172a;--acc:#4f46e5;--acc2:#6366f1;--bg:#f1f5f9;--card:#fff;
+ --tx:#0f172a;--tx2:#475569;--tx3:#94a3b8;--line:#e2e8f0;--ok:#059669;--warn:#d97706;--red:#dc2626;--gold:#c8a96e}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
+/* ── login ── */
+#login{position:fixed;inset:0;background:linear-gradient(135deg,#1e293b,#0f172a);display:flex;align-items:center;justify-content:center;z-index:100}
+.login-card{background:#fff;border-radius:14px;padding:34px 30px;width:min(360px,90vw);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.login-card .eyebrow{font-size:10px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;margin-bottom:8px;font-weight:700}
+.login-card h1{font-size:20px;margin-bottom:4px}
+.login-card p{font-size:12px;color:var(--tx2);margin-bottom:18px;line-height:1.5}
+.login-card input{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:9px;font-size:14px;text-align:center;outline:none;margin-bottom:10px}
+.login-card input:focus{border-color:var(--acc)}
+.login-card button{width:100%;padding:11px;border:none;border-radius:9px;background:var(--acc);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.login-card button:hover{background:var(--acc2)}
+.login-note{font-size:10.5px;color:var(--tx3);margin-top:10px}
+/* ── layout ── */
+#app{display:none;min-height:100vh}
+#app.in{display:flex}
+aside{width:220px;background:var(--side);color:#cbd5e1;flex-shrink:0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.brand{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand .eyebrow{font-size:9px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;font-weight:700}
+.brand h1{font-size:17px;color:#fff;margin-top:3px}
+nav{padding:12px 10px;flex:1}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13.5px;margin-bottom:2px;color:#cbd5e1}
+.nav-item:hover{background:rgba(255,255,255,.06)}
+.nav-item.on{background:var(--acc);color:#fff;font-weight:600}
+.nav-item .ic{width:18px;text-align:center}
+.side-foot{padding:14px 18px;font-size:10.5px;color:#64748b;border-top:1px solid rgba(255,255,255,.08)}
+main{flex:1;min-width:0;padding:22px 26px 60px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.topbar h2{font-size:20px}
+.proto-badge{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px}
+.btn{padding:9px 16px;border:none;border-radius:8px;background:var(--acc);color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.btn:hover{background:var(--acc2)}
+.btn.ghost{background:#fff;color:var(--tx2);border:1.5px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);color:var(--acc)}
+.btn.danger{background:#fff;color:var(--red);border:1.5px solid #fecaca}
+.btn.danger:hover{background:#fef2f2}
+.btn.sm{padding:5px 10px;font-size:12px}
+.card{background:var(--card);border-radius:12px;border:1px solid var(--line);padding:18px 20px;margin-bottom:16px}
+.card h3{font-size:14px;margin-bottom:12px;color:var(--tx)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.stat .n{font-size:26px;font-weight:800;color:var(--acc)}
+.stat .l{font-size:12px;color:var(--tx2);margin-top:2px}
+.note{background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.6;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--tx3);padding:8px;border-bottom:2px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:hover td{background:#f8fafc}
+.pthumb{width:38px;height:38px;border-radius:6px;object-fit:cover;background:var(--line);display:block}
+.mono{font-variant-numeric:tabular-nums}
+.tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;background:#f1f5f9;color:var(--tx2);font-weight:600}
+.tag.warn{background:#fef3c7;color:#92400e}
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search-row input,.search-row select{padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;outline:none;background:#fff}
+.search-row input:focus,.search-row select:focus{border-color:var(--acc)}
+.search-row input{flex:1;min-width:180px}
+.subtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.subtab{padding:8px 14px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;cursor:pointer;color:var(--tx2)}
+.subtab.on{background:var(--side);border-color:var(--side);color:#fff;font-weight:600}
+/* ── modal ── */
+#ovl{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:flex-start;justify-content:center;z-index:60;padding:30px 16px;overflow:auto}
+#ovl.show{display:flex}
+.modal{background:#fff;border-radius:14px;width:min(760px,100%);padding:22px 24px;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.modal h3{font-size:16px;margin-bottom:14px}
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f-grid .full{grid-column:1/-1}
+.fld label{display:block;font-size:11px;font-weight:600;color:var(--tx2);margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);border-radius:8px;font-size:13px;outline:none;font-family:inherit}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--acc)}
+.fld textarea{min-height:64px;resize:vertical}
+.price-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.modal-acts{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+/* ── toast ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--side);color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;transition:transform .25s;z-index:80;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.foto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px}
+.foto-cell{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px}
+.foto-thumb{height:118px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:7px;overflow:hidden;margin-bottom:7px}
+.foto-thumb img{max-width:100%;max-height:118px;object-fit:contain}
+.foto-lbl{font-size:11px;color:var(--tx2);margin-bottom:5px;min-height:28px;line-height:1.3}
+.foto-url{width:100%;padding:6px 8px;border:1.5px solid var(--line);border-radius:6px;font-size:11px;outline:none}
+.foto-url:focus{border-color:var(--acc)}
+.chk{display:flex;gap:7px;align-items:center;font-size:13px}
+#toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:840px){aside{width:64px}.brand h1,.nav-item span.tx,.side-foot{display:none}.grid3{grid-template-columns:1fr}.f-grid{grid-template-columns:1fr}.price-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div id="login">
+ <div class="login-card">
+  <div class="eyebrow">Rove Gift · Internal</div>
+  <h1>Admin Dashboard</h1>
+  <p>Kelola produk, packaging, harga &amp; tarif.<br>Khusus admin — bukan untuk tim sales.</p>
+  <input id="pw" type="password" placeholder="Passcode admin" onkeydown="if(event.key==='Enter')doLogin()">
+  <button onclick="doLogin()">Masuk</button>
+  <div class="login-note">Masukkan <b>passcode admin</b> untuk mengelola data live.</div>
+  <div id="loginMsg" style="min-height:18px;margin-top:8px;font-size:12.5px;color:#dc2626"></div>
+ </div>
+</div>
+
+<div id="app">
+ <aside>
+  <div class="brand"><div class="eyebrow">Rove · Backend</div><h1>Admin</h1></div>
+  <nav id="nav"></nav>
+  <div class="side-foot">Prototype v0.1<br>Data: snapshot lokal</div>
+ </aside>
+ <main>
+  <div class="topbar">
+   <h2 id="pageTitle">Ringkasan</h2>
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <span class="proto-badge">Draft lokal — klik Publish untuk kirim ke database</span>
+    <button class="btn sm" onclick="publishAll()">☁ Publish ke Database</button>
+    <button class="btn ghost sm" onclick="resetAll()">↺ Muat ulang</button>
+   </div>
+  </div>
+  <div id="page"></div>
+ </main>
+</div>
+
+<div id="ovl"><div class="modal" id="modalBox"></div></div>
+<div id="toast"></div>
+
+<script>window.ROVE_DB={"products":[],"softpouch":[],"hardbox":[],"softbox":[],"cards":[],"services":[],"collateral":[{"type":"Soft Pouch","kind":"Feature","value":"Standard Drawstring","photo":"https://drive.google.com/file/d/18yMwa-5MGQfKFQGXVbC4gIwZTANWgjOk/view?usp=sharing"},{"type":"Soft Pouch","kind":"Feature","value":"Ruffles Drawstring","photo":"https://drive.google.com/file/d/1ImVb5PTLzCBvMoVnN5ZUtmZOr1pjq5Ef/view?usp=sharing"},{"type":"Soft Pouch","kind":"Feature","value":"Envelope","photo":"https://drive.google.com/file/d/1bOcxAJA8cbd8sDbtQ2VHQKhLXavEXyB7/view?usp=sharing"},{"type":"Soft Pouch","kind":"Feature","value":"Envelope with Overlock Stitching","photo":"https://drive.google.com/file/d/1M5b7bfIl2KyZa7yYt1P7seFGaFMWsHoQ/view?usp=sharing"},{"type":"Hardbox","kind":"Feature","value":"Top Bottom - Standard","photo":"https://drive.google.com/file/d/1GAPUFOItQ0r3aB1tHCXWkJIJYfDO8P5-/view?usp=sharing"},{"type":"Hardbox","kind":"Feature","value":"Sliding - Standard","photo":"https://drive.google.com/file/d/1pNPJ23uK3vENJ0uknsXE0_b4OXdUzGRp/view?usp=sharing"},{"type":"Hardbox","kind":"Feature","value":"Magnet - Standard","photo":"https://drive.google.com/file/d/1c5ujMbooYxatVBlcc1Kdo7rNFJh3z4Tb/view?usp=sharing"},{"type":"Hardbox","kind":"Feature","value":"Magnet - Collapsable","photo":"https://drive.google.com/file/d/1869wjWwODgnV8KLQhZoivBcU3llmcLr5/view?usp=sharing"},{"type":"Softbox","kind":"Feature","value":"Top Bottom - Standard","photo":"https://drive.google.com/file/d/1oSAO5OA4clOegI52PDM4rpUSdXCf2ff3/view?usp=sharing"},{"type":"Softbox","kind":"Feature","value":"Sliding - Standard","photo":"https://drive.google.com/file/d/1TD1JtpyDaoyabRC3wv3YECSCIr-C3P56/view?usp=sharing"},{"type":"Softbox","kind":"Feature","value":"Tuck End Box - Standard","photo":"https://drive.google.com/file/d/1Bx5fCqenHQOpp4FQfiTppFCA_bEL_6Q7/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Calico","photo":"https://drive.google.com/file/d/1XigEiIamkBOjL-wXH2R-ZpFhL9ICjmeZ/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Satin","photo":"https://drive.google.com/file/d/1vFgaSkFsrUdnPljKlUGZN95MQHdBxvKg/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Drill","photo":"https://drive.google.com/file/d/1q9xkBPyafYe_Pdkivel0ltpJSLH40vVq/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Canvas","photo":"https://drive.google.com/file/d/1dbvmrMxjDH3OS2sepub4V8q-VtN-AZ8c/view?usp=sharing"},{"type":"Soft Pouch","kind":"Material","value":"Velvet","photo":"https://drive.google.com/file/d/1Da-_Yozrhq7_XLE_IAVzJKbA6ZpCu9ia/view?usp=sharing"},{"type":"Thank You Card","kind":"Material","value":"Brief Card","photo":"https://drive.google.com/file/d/1U7Q1CL-fsbSWwcP7s6YsxkP0vEiHlJNp/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Blush White","photo":"https://drive.google.com/file/d/1U7Q1CL-fsbSWwcP7s6YsxkP0vEiHlJNp/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Ivory","photo":"https://drive.google.com/file/d/11DShv7JLhvcgd4XHujhsqLisx2lcmFNi/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Art Paper","photo":"https://drive.google.com/file/d/10y_-wgUt54ICOUOET7rzMVB0yzfYccaq/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Craft Paper","photo":"https://drive.google.com/file/d/1IQiZCIGq-3oG_P941vkRT5MHUGM3E01R/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Recycled Paper","photo":"https://drive.google.com/file/d/1ZYE4hmc5H1dpmytsMkXUOilNp0BSBHe-/view?usp=drive_link"},{"type":"Thank You Card","kind":"Material","value":"Premium Paper","photo":"https://drive.google.com/file/d/1_WHDsSGe_yvqvi2_2cYDMUnXms7Io2S8/view?usp=sharing"},{"type":"Soft Pouch","kind":"Tali","value":"Tali katun","photo":"https://drive.google.com/file/d/1r-iBwODGAo9dDrrxnL1BPzm1yAK2cuA9/view?usp=sharing"},{"type":"Soft Pouch","kind":"Tali","value":"Tali Gross Grain","photo":"https://drive.google.com/file/d/1yzXVHlFEMFqiBsTGo1pKwyLIt2HS8EhI/view?usp=sharing"},{"type":"Soft Pouch","kind":"Tali","value":"Tali Velvet","photo":"https://drive.google.com/file/d/18yMwa-5MGQfKFQGXVbC4gIwZTANWgjOk/view?usp=sharing"},{"type":"Soft Pouch","kind":"Finishing","value":"Polos","photo":"https://drive.google.com/file/d/1XigEiIamkBOjL-wXH2R-ZpFhL9ICjmeZ/view?usp=sharing"},{"type":"Soft Pouch","kind":"Finishing","value":"Print","photo":"https://drive.google.com/file/d/1hKCkPNA-q6y9lqW-K2kep8C8Q4uGhtp_/view?usp=sharing"},{"type":"Soft Pouch","kind":"Finishing","value":"Bordir","photo":"https://drive.google.com/file/d/1ImVb5PTLzCBvMoVnN5ZUtmZOr1pjq5Ef/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"Print","photo":"https://drive.google.com/file/d/1GAPUFOItQ0r3aB1tHCXWkJIJYfDO8P5-/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"Hotprint","photo":"https://drive.google.com/file/d/1q2zbv1w9KSb41HShBIw_ajJ7AWQ0Ed85/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"UV Print","photo":"https://drive.google.com/file/d/1zNGqsKxQM-eLntgeZDMWEsQjxporqG_9/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"Sablon","photo":"https://drive.google.com/file/d/13lHMrstVQkxrxeYHtl0r53fbGccMovsP/view?usp=sharing"},{"type":"Hardbox","kind":"Finishing","value":"Debossed","photo":"https://drive.google.com/file/d/1i1lC7tFrS5tDRfbCo5j0lnigcywCVjhT/view?usp=sharing"},{"type":"Softbox","kind":"Finishing","value":"Print","photo":"https://drive.google.com/file/d/1TD1JtpyDaoyabRC3wv3YECSCIr-C3P56/view?usp=sharing"},{"type":"Softbox","kind":"Finishing","value":"Hotprint","photo":"https://drive.google.com/file/d/1oSAO5OA4clOegI52PDM4rpUSdXCf2ff3/view?usp=sharing"},{"type":"Softbox","kind":"Finishing","value":"UV Print","photo":"https://drive.google.com/file/d/1LnHNTUcebcT-5295KjOrpLNelFdAcENe/view?usp=sharing"},{"type":"Thank You Card","kind":"Finishing","value":"Debossed - Uncoated","photo":"https://drive.google.com/file/d/11lS8GikfZ0N_g4qtkxecuBGZBYkR-Nij/view?usp=sharing"},{"type":"Thank You Card","kind":"Finishing","value":"Embossed - Uncoated","photo":"https://drive.google.com/file/d/1rloqVJs6rFrh0CBR3g0WcwGtB8FEEh18/view?usp=sharing"},{"type":"Thank You Card","kind":"Finishing","value":"Hotprint - Uncoated","photo":"https://drive.google.com/file/d/1_WHDsSGe_yvqvi2_2cYDMUnXms7Io2S8/view?usp=sharing"},{"type":"Thank You Card","kind":"Finishing","value":"Print - Glossy","photo":"https://drive.google.com/file/d/1EVf-AoGqQHRrZjOYIHkB7MUX2ZMuYZAo/view?usp=drive_link"},{"type":"Thank You Card","kind":"Finishing","value":"Print - Doff","photo":"https://drive.google.com/file/d/11DShv7JLhvcgd4XHujhsqLisx2lcmFNi/view?usp=drive_link"},{"type":"Thank You Card","kind":"Finishing","value":"Print - Uncoated","photo":"https://drive.google.com/file/d/1iD2W8DFi0c4How5M5Z0fauM9mXiEAioZ/view?usp=drive_link"},{"type":"Thank You Card","kind":"Ukuran","value":"6x9","photo":"https://drive.google.com/file/d/11DShv7JLhvcgd4XHujhsqLisx2lcmFNi/view?usp=drive_link"},{"type":"Thank You Card","kind":"Ukuran","value":"10,5x14,8","photo":"https://drive.google.com/file/d/1Xrvy0Ke9X5_4js2NYnnJY-82yPtbelG3/view?usp=sharing"}],"meta":{"productTiers":["1-12","13-49","50-99","100-199","200-299","300-499","500+"],"productTierQty":[6,30,75,150,250,400,600],"packTiers":["1-50","51-100","101-200","201-300","301-500","501+"],"packTierQty":[25,75,150,250,400,600],"softboxMOQ":500}};</script>
+<script>
+/* ═══ Rove Admin Prototype — semua edit tersimpan di localStorage, TIDAK menyentuh database asli ═══ */
+const DB=window.ROVE_DB;
+const rp=n=>n==null?'—':'Rp '+Math.round(n).toLocaleString('en-AU');
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const PT=DB.meta.productTiers, KT=DB.meta.packTiers;
+const CFG_DEF={USD_IDR:16400,AUD_IDR:10800,WG_SOFT_POUCH:15,WG_HARDBOX:180,WG_SOFTBOX:55,WG_THANKYOU_CARD:6};
+const SHIP_DEF={carriers:[{id:'indo',name:'Indoshipping',show:true},{id:'dhl',name:'DHL Express',show:false},{id:'ups',name:'UPS',show:false},{id:'lion',name:'Lion Parcel',show:false},{id:'ray',name:'Rayspeed Asia',show:false}],sea:{usdPerCbm:100,fixedUsd:320,transit:'18-25 days'},boxes:[{size:'XS',L:20,W:20,H:16,wg:200},{size:'S',L:35,W:32,H:20,wg:350},{size:'M',L:54,W:34,H:26,wg:500},{size:'L',L:74,W:50,H:46,wg:800}],divRegular:5000,divEconomy:6000,packingFactor:1.10,cartonUtil:0.80};
+const TARIF_DEF=[[0.5,454000,300000],[1,454000,300000],[2,390000,260000],[5,355000,235000],[10,320000,210000],[20,285000,190000],[30,260000,170000],[50,235000,155000],[999,215000,140000]];
+const KOMB_KEYS={softpouch:['model','material','tali','sise','finishing'],hardbox:['model','construction','finishing','sisi','ukuran'],softbox:['model','construction','finishing','ukuran'],cards:['material','coat','finishing','cut','sise']};
+const KOMB_LABEL={softpouch:'Soft Pouch',hardbox:'Hard Box',softbox:'Soft Box',cards:'Thank You Card'};
+const QUOTES_SAMPLE=[
+ {ts:'2026-06-26 14:32',enq:'ENQ0020',client:'David & Flo',total:6277500,ship:'Indoshipping Economy',shipTotal:1155000,grand:7432500,items:2},
+ {ts:'2026-06-25 10:05',enq:'ENQ0019',client:'Botanique Hotel',total:14350000,ship:'Sea Freight LCL',shipTotal:5412000,grand:19762000,items:4}
+];
+
+/* Berat produk (gram) dari live sheet "Database Product" — rove_data.js belum memuat kolom ini,
+   jadi disemai di sini; versi sungguhan membacanya langsung dari Sheet via backend */
+const WG_SEED={'Adjustable Wine Holder':410,'Daisy Luggage Tag':45,'Dundee Luggage Tag':45,'Eyeglasses Case':65,
+ 'Irvine Card Wallet':45,'Alkmaar Keychain':40,'Nara Passport Wallet':105,'Kiev Keycase':50,'Neuss Passport Cover':105,
+ 'Roseville Pouch':250,'Coaster Set for Capitol Hill':210,'Wine Holder':65,'Tray Set for Hucraft':235,'Rason Pouch':150,
+ 'Denmark Luggage Tag':45,'Gale Keywallet':100,'Hanoi Card Case':100,'Idaho Card Wallet':45,'Jena Keywallet':65,
+ 'London Travel Wallet':160,'Manado Clutch':160,'Nagasaki Passport Cover':105,'Queensland Cable Clip':16,
+ 'Riga Mini Pouch':70,'Rome Pouch':130,'Tokyo Compact Mirror':75,'Animal Keychain':10,'Ankara Key Chain':25,
+ 'Dortmund Luggage Tag':45,'Durham Luggage Tag':45,'Erie ID Tag':45,'Ginza Bifold Card Wallet':45,'Hungary Card Case':45,
+ 'Ibiza Card Wallet':45,'Jericho Key Wallet':65,'Jinan Key Wallet':65,'Kobe Key Case':30,'Nagano Passport Wallet':105,
+ 'Napa Passport Wallet':105,'Richmond Toiletries':270,'Ube Tray':110,'Voodoo Doll (M)':60,'Coaster for Botanique':27,
+ 'Desk Mat for Optimus Event Organizer':350,'Dog Shaped Bag for Rove HQ':530,'Gift Set for Honda CR-V':450,
+ 'Gift Set for Lightfoot':400,'Gift Set for Styloz x Rove Gift':300,'Harvard Card Case for Google':70,
+ 'Iriga Card Wallet for Netflix':65,'Jewelry Box for Frank & Co':80,'Keychain for Frank & Co':50,
+ 'Keychain for Gordon Ramsay Fish & Chip':20,'Keychain for Gordron Ramsay Street Burger':20,'Lanyard for Artax Indonesia':25,
+ 'Menu Book for Bask Gili':340,'Menu Book for Botanique':175,'Photo Frame for Andre & Mercia':350,
+ 'Small Pouch for Thomas & Alesya':15,'Tech Organizer for Intiland':520,'Tote Bag for Imey Liem':70,
+ 'Tote Bag for Lightfoot':70,'Totebag for Thee Marloes':70,'Travel Size Jewelry Box for Rove AU':150,
+ 'Tray for Andre & Mercia':90,'Weaved Tray for Modico':130};
+/* state — deep-copy dari DB + override localStorage */
+let S=null;
+function freshState(){const st={
+ products:JSON.parse(JSON.stringify(DB.products)),
+ softpouch:JSON.parse(JSON.stringify(DB.softpouch)),
+ hardbox:JSON.parse(JSON.stringify(DB.hardbox)),
+ softbox:JSON.parse(JSON.stringify(DB.softbox)),
+ cards:JSON.parse(JSON.stringify(DB.cards)),
+ services:JSON.parse(JSON.stringify(DB.services||[])),
+ collateral:JSON.parse(JSON.stringify(DB.collateral||[])),
+ config:Object.assign({},CFG_DEF),
+ shipping:Object.assign(JSON.parse(JSON.stringify(SHIP_DEF)),{tariffs:JSON.parse(JSON.stringify(TARIF_DEF))}),
+ quotes:JSON.parse(JSON.stringify(QUOTES_SAMPLE))};
+ st.products.forEach(p=>{if(p.weightG==null&&WG_SEED[p.hq]!=null)p.weightG=WG_SEED[p.hq];});
+ return st;}
+function load(){try{const s=localStorage.getItem('rove_admin_proto');if(s){const st=JSON.parse(s);const fr=freshState();['services','collateral','shipping'].forEach(k=>{if(!st[k])st[k]=fr[k];});delete st.tariffs;return st;}}catch(e){}return freshState();}
+function save(){localStorage.setItem('rove_admin_proto',JSON.stringify(S));}
+function resetAll(){if(confirm('Buang semua perubahan prototype dan kembali ke data asli?')){localStorage.removeItem('rove_admin_proto');S=load();render();toast('Perubahan di-reset — kembali ke data asli');}}
+S=load();
+
+/* ═══ PRODUCTION — live backend: fetch data on login, publish on save ═══ */
+const BACKEND_URL='https://script.google.com/macros/s/AKfycbyQVypvgdSOgzsd_1lCRqzWHVC8Y9JqUGMPlzAI4I4--z3x9TqfAGPnSkCtU_TpVXShhw/exec';
+const LS_ATOK='rove_admin_tok';
+function loginMsg(t,ok){var e=document.getElementById('loginMsg');if(e){e.textContent=t||'';e.style.color=ok?'#16a34a':'#dc2626';}}
+function applyServer(resp){
+ if(resp.products)DB.products=resp.products;
+ if(resp.softpouch)DB.softpouch=resp.softpouch; if(resp.hardbox)DB.hardbox=resp.hardbox;
+ if(resp.softbox)DB.softbox=resp.softbox; if(resp.cards)DB.cards=resp.cards;
+ if(resp.services)DB.services=resp.services;
+ S=freshState();
+ if(resp.config){
+  ['USD_IDR','AUD_IDR','WG_SOFT_POUCH','WG_HARDBOX','WG_SOFTBOX','WG_THANKYOU_CARD'].forEach(function(k){if(resp.config[k]!=null)S.config[k]=resp.config[k];});
+  if(resp.config.shipping)S.shipping=Object.assign(JSON.parse(JSON.stringify(SHIP_DEF)),{tariffs:JSON.parse(JSON.stringify(TARIF_DEF))},resp.config.shipping);
+ }
+ save();
+}
+function doLogin(){
+ var pw=(document.getElementById('pw').value||'').trim();
+ if(!pw){loginMsg('Isi passcode admin.');return;}
+ loginMsg('Memuat data…',true);
+ fetch(BACKEND_URL+'?t='+encodeURIComponent(pw)+'&data=1').then(function(r){return r.json();}).then(function(j){
+  if(!j||j.ok===false||!j.products)throw new Error((j&&j.error)||'Passcode salah / data kosong');
+  window.__ATOKEN=pw; localStorage.setItem(LS_ATOK,pw);
+  applyServer(j); enter();
+ }).catch(function(e){loginMsg((''+e.message).slice(0,90));});
+}
+function enter(){document.getElementById('login').style.display='none';document.getElementById('app').classList.add('in');render();}
+function apost(payload){var tok=window.__ATOKEN||localStorage.getItem(LS_ATOK)||'';return fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({t:tok},payload))}).then(function(r){return r.json();});}
+function admProg(t){var d=document.createElement('div');d.id='admProg';d.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,sans-serif';d.innerHTML='<div style="background:#fff;padding:22px 28px;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.3);text-align:center"><div class="apt" style="font-size:14px;font-weight:600;color:#0f172a">'+t+'</div><div style="margin-top:6px;font-size:12px;color:#64748b">Menyimpan ke database…</div></div>';document.body.appendChild(d);return {set:function(x){var e=d.querySelector('.apt');if(e)e.textContent=x;},done:function(){d.remove();}};}
+function publishAll(){
+ var tok=window.__ATOKEN||localStorage.getItem(LS_ATOK)||'';
+ if(!tok){alert('Sesi berakhir — masuk lagi.');return;}
+ if(!confirm('Publish SEMUA perubahan ke database live?\n\n• Products\n• Packaging & Card\n• Service\n• Config & Shipping\n\nData live akan diganti dengan data di layar ini.'))return;
+ var jobs=[
+  ['Products',{action:'saveProducts',rows:S.products}],
+  ['Packaging & Card',{action:'saveKombinasi',data:{softpouch:S.softpouch,hardbox:S.hardbox,softbox:S.softbox,cards:S.cards}}],
+  ['Service',{action:'saveServices',rows:S.services}],
+  ['Config & Shipping',{action:'saveConfig',config:Object.assign({},S.config,{shipping:S.shipping})}]
+ ];
+ var pr=admProg('Publish 0/'+jobs.length);
+ (async function(){var okc=0,errs=[];for(var i=0;i<jobs.length;i++){pr.set('Publish '+(i+1)+'/'+jobs.length+' — '+jobs[i][0]);try{var res=await apost(jobs[i][1]);if(res&&res.ok)okc++;else errs.push(jobs[i][0]+': '+((res&&res.error)||'gagal'));}catch(e){errs.push(jobs[i][0]+': '+e.message);}}pr.done();if(errs.length)alert('Sebagian gagal:\n'+errs.join('\n'));else toast('✓ Terpublish ke database ('+okc+'/'+jobs.length+' bagian)');})();
+}
+function resetAll(){
+ var tok=window.__ATOKEN||localStorage.getItem(LS_ATOK);if(!tok)return;
+ if(!confirm('Muat ulang dari database? Perubahan lokal yang belum di-Publish akan hilang.'))return;
+ fetch(BACKEND_URL+'?t='+encodeURIComponent(tok)+'&data=1').then(function(r){return r.json();}).then(function(j){if(j&&j.products){applyServer(j);render();toast('Dimuat ulang dari database.');}else toast('Gagal memuat.');}).catch(function(){toast('Gagal memuat ulang.');});
+}
+/* auto-login with saved admin token */
+(function(){var t=localStorage.getItem(LS_ATOK);if(t){var i=document.getElementById('pw');if(i)i.value=t;doLogin();}})();
+
+/* nav */
+const PAGES=[
+ {id:'home',ic:'▦',label:'Ringkasan'},
+ {id:'produk',ic:'▤',label:'Produk'},
+ {id:'pack',ic:'◫',label:'Packaging & Card'},
+ {id:'service',ic:'✦',label:'Service'},
+ {id:'shipping',ic:'⛴',label:'Shipping'},
+ {id:'foto',ic:'▣',label:'Foto Varian'},
+ {id:'config',ic:'◎',label:'Config'},
+ {id:'quotes',ic:'≡',label:'Quotes Log'}
+];
+let page='home',packSet='softpouch',prodQ='',prodSeries='';
+function setPage(p){page=p;render();}
+function render(){
+ document.getElementById('nav').innerHTML=PAGES.map(p=>`<div class="nav-item ${p.id===page?'on':''}" onclick="setPage('${p.id}')"><span class="ic">${p.ic}</span><span class="tx">${p.label}</span></div>`).join('');
+ document.getElementById('pageTitle').textContent=PAGES.find(p=>p.id===page).label;
+ const el=document.getElementById('page');
+ if(page==='home')el.innerHTML=homeUI();
+ else if(page==='produk')el.innerHTML=prodUI();
+ else if(page==='pack')el.innerHTML=packUI();
+ else if(page==='service')el.innerHTML=serviceUI();
+ else if(page==='shipping')el.innerHTML=shippingUI();
+ else if(page==='foto')el.innerHTML=fotoUI();
+ else if(page==='config')el.innerHTML=configUI();
+ else el.innerHTML=quotesUI();
+}
+
+/* ── RINGKASAN ── */
+function homeUI(){
+ const wg=S.products.filter(p=>p.weightG!=null||p.wg!=null).length;
+ const kombN=S.softpouch.length+S.hardbox.length+S.softbox.length+S.cards.length;
+ return `<div class="note"><b>Ini prototype "backend website" Rove.</b> Semua tombol Tambah/Edit/Hapus berfungsi — tapi perubahan tersimpan <b>di browser ini saja</b> (database asli & Google Sheet tidak tersentuh). Kalau alur & tampilannya sudah kamu setujui, versi sungguhan akan menyimpan langsung ke Google Sheet lewat mesin backend.</div>
+ <div class="grid3">
+  <div class="stat"><div class="n">${S.products.length}</div><div class="l">Produk di katalog</div></div>
+  <div class="stat"><div class="n">${kombN}</div><div class="l">Kombinasi packaging &amp; card</div></div>
+  <div class="stat"><div class="n">${S.quotes.length}</div><div class="l">Quotes tercatat (contoh)</div></div>
+ </div>
+ <div class="card" style="margin-top:16px"><h3>Coba alurnya</h3>
+  <div style="font-size:13px;color:var(--tx2);line-height:1.9">
+  1. Buka <b>Produk</b> → cari produk → <b>Edit</b> → ubah harga/berat → Simpan.<br>
+  2. Klik <b>+ Tambah Produk</b> → isi form → produk baru muncul di daftar.<br>
+  3. Buka <b>Packaging &amp; Card</b> → pilih jenis → edit harga tier kombinasi.<br>
+  4. Buka <b>Tarif &amp; Config</b> → ubah kurs / tarif Indoshipping per bracket.<br>
+  5. Salah semua? Klik <b>↺ Reset perubahan</b> di kanan atas.</div></div>`;
+}
+
+/* ── PRODUK ── */
+function prodUI(){
+ const series=[...new Set(S.products.map(p=>p.series).filter(Boolean))];
+ const q=prodQ.toLowerCase();
+ const rows=S.products.map((p,i)=>({p,i})).filter(({p})=>
+  (!prodSeries||p.series===prodSeries)&&(!q||(p.hq+' '+(p.au||'')+' '+(p.material||'')).toLowerCase().includes(q)));
+ return `<div class="search-row">
+   <input placeholder="Cari nama / material…" value="${esc(prodQ)}" oninput="prodQ=this.value;render()">
+   <select onchange="prodSeries=this.value;render()"><option value="">Semua series</option>${series.map(s=>`<option ${s===prodSeries?'selected':''}>${esc(s)}</option>`).join('')}</select>
+   <button class="btn" onclick="editProd(-1)">+ Tambah Produk</button>
+  </div>
+  <div class="card" style="padding:6px 14px 14px;overflow-x:auto">
+  <table><thead><tr><th></th><th>Produk (HQ)</th><th>Nama AU</th><th>Series</th><th>Ukuran</th><th>Berat</th><th>Harga 50-99</th><th style="width:130px"></th></tr></thead><tbody>
+  ${rows.map(({p,i})=>`<tr>
+    <td>${p.photos&&p.photos[0]?`<img class="pthumb" loading="lazy" src="${esc(p.photos[0])}" onerror="this.style.visibility='hidden'">`:`<div class="pthumb"></div>`}</td>
+    <td><b>${esc(p.hq)}</b></td><td>${esc(p.au)||'<span class="tag">—</span>'}</td>
+    <td><span class="tag">${esc(p.series)}</span></td><td style="font-size:12px;color:var(--tx2)">${esc(p.size)}</td>
+    <td class="mono">${p.weightG!=null?p.weightG+' g':'<span class="tag warn">kosong</span>'}</td>
+    <td class="mono">${rp(p.t&&p.t[2])}</td>
+    <td><button class="btn ghost sm" onclick="editProd(${i})">Edit</button> <button class="btn danger sm" onclick="delProd(${i})">Hapus</button></td>
+   </tr>`).join('')}
+  </tbody></table>
+  <div style="font-size:11.5px;color:var(--tx3);margin-top:8px">${rows.length} dari ${S.products.length} produk</div></div>`;
+}
+function editProd(i){
+ const p=i>=0?S.products[i]:{series:'',hq:'',au:'',size:'',weightG:null,material:'',t:[null,null,null,null,null,null,null],photos:[],adjSize:'tidak',adjReclaimed:'tidak',adjFaux:'bisa',adjFeature:'tidak',note:'-'};
+ openModal(`<h3>${i>=0?'Edit Produk':'Tambah Produk'}</h3>
+  <div class="f-grid">
+   <div class="fld"><label>Nama Produk Rove HQ *</label><input id="f_hq" value="${esc(p.hq)}"></div>
+   <div class="fld"><label>Nama Produk Rove AU</label><input id="f_au" value="${esc(p.au)}"></div>
+   <div class="fld"><label>Series</label><input id="f_series" list="dl_series" value="${esc(p.series)}"><datalist id="dl_series">${[...new Set(S.products.map(x=>x.series))].map(s=>`<option>${esc(s)}</option>`).join('')}</datalist></div>
+   <div class="fld"><label>Main Material</label><input id="f_mat" value="${esc(p.material)}"></div>
+   <div class="fld"><label>Ukuran Produk (cm)</label><input id="f_size" value="${esc(p.size)}" placeholder="mis. 10 x 17 x 1,5 cm"></div>
+   <div class="fld"><label>Berat Produk (gram)</label><input id="f_wg" type="number" min="0" value="${p.weightG!=null?p.weightG:''}"></div>
+   <div class="fld full"><label>Harga per tier (Rp)</label><div class="price-grid">
+    ${PT.map((t,k)=>`<div><label style="font-weight:400;color:var(--tx3)">${t}</label><input id="f_t${k}" type="number" min="0" value="${p.t&&p.t[k]!=null?p.t[k]:''}"></div>`).join('')}
+   </div></div>
+   ${[['adjSize','f_as','Adjust — Size'],['adjReclaimed','f_ar','Adjust — Reclaimed'],['adjFaux','f_af','Adjust — Faux'],['adjFeature','f_afe','Adjust — Feature']].map(a=>{const fld=a[0],idm=a[1],lbl=a[2];const opts=[...new Set(S.products.map(x=>x[fld]).filter(Boolean))].sort();return `<div class="fld"><label>${lbl}</label><input id="${idm}" list="dl_${idm}" value="${esc(p[fld])}" placeholder="pilih / ketik…"><datalist id="dl_${idm}">${opts.map(o=>`<option>${esc(o)}</option>`).join('')}</datalist></div>`;}).join('')}
+   <div class="fld full"><label>Note Feature</label><input id="f_note" value="${esc(p.note)}"></div>
+   <div class="fld full"><label>Foto (URL Drive, satu per baris) — versi sungguhan: tombol Upload langsung ke Drive</label><textarea id="f_ph">${esc((p.photos||[]).join('\n'))}</textarea></div>
+  </div>
+  <div class="modal-acts"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveProd(${i})">Simpan</button></div>`);
+}
+function saveProd(i){
+ const g=id=>document.getElementById(id).value.trim();
+ if(!g('f_hq')){alert('Nama Produk Rove HQ wajib diisi.');return;}
+ const nv=v=>v===''?null:parseFloat(v);
+ const p={series:g('f_series'),hq:g('f_hq'),au:g('f_au'),size:g('f_size'),weightG:nv(g('f_wg')),material:g('f_mat'),
+  t:PT.map((_,k)=>nv(g('f_t'+k))),photos:g('f_ph')?g('f_ph').split('\n').map(s=>s.trim()).filter(Boolean):[],
+  adjSize:g('f_as'),adjReclaimed:g('f_ar'),adjFaux:g('f_af'),adjFeature:g('f_afe'),note:g('f_note'),slots:i>=0?S.products[i].slots:null,reclConv:i>=0?S.products[i].reclConv:null};
+ if(i>=0)S.products[i]=Object.assign({},S.products[i],p);else S.products.push(p);
+ save();closeModal();render();toast(i>=0?'Produk diperbarui (lokal)':'Produk ditambahkan (lokal)');
+}
+function delProd(i){if(confirm('Hapus "'+S.products[i].hq+'" dari katalog?')){S.products.splice(i,1);save();render();toast('Produk dihapus (lokal)');}}
+
+/* ── PACKAGING & CARD ── */
+function packUI(){
+ const keys=KOMB_KEYS[packSet],rows=S[packSet];
+ return importBar('pack')+`<div class="subtabs">${Object.keys(KOMB_KEYS).map(k=>`<div class="subtab ${k===packSet?'on':''}" onclick="packSet='${k}';render()">${KOMB_LABEL[k]}</div>`).join('')}</div>
+  <div class="search-row"><div style="flex:1"></div><button class="btn" onclick="editKomb(-1)">+ Tambah kombinasi</button></div>
+  <div class="card" style="padding:6px 14px 14px;overflow-x:auto">
+  <table><thead><tr>${keys.map(k=>`<th>${esc(k)}</th>`).join('')}${KT.map(t=>`<th class="mono">${t}</th>`).join('')}<th style="width:130px"></th></tr></thead><tbody>
+  ${rows.map((r,i)=>`<tr>${keys.map(k=>`<td>${esc(r[k])}</td>`).join('')}${KT.map((_,k)=>`<td class="mono">${r.t&&r.t[k]!=null?rp(r.t[k]).replace('Rp ',''):'—'}</td>`).join('')}
+   <td><button class="btn ghost sm" onclick="editKomb(${i})">Edit</button> <button class="btn danger sm" onclick="delKomb(${i})">Hapus</button></td></tr>`).join('')}
+  </tbody></table>
+  <div style="font-size:11.5px;color:var(--tx3);margin-top:8px">${rows.length} kombinasi · harga per tier qty (${KT.join(' / ')})</div></div>`;
+}
+function editKomb(i){
+ const keys=KOMB_KEYS[packSet];
+ const r=i>=0?S[packSet][i]:Object.assign({kombinasi:'',t:[null,null,null,null,null,null]},Object.fromEntries(keys.map(k=>[k,''])));
+ openModal(`<h3>${i>=0?'Edit':'Tambah'} kombinasi — ${KOMB_LABEL[packSet]}</h3>
+  <div class="f-grid">
+   ${keys.map(k=>`<div class="fld"><label>${esc(k)}</label><input id="k_${k}" list="dlk_${k}" value="${esc(r[k])}"><datalist id="dlk_${k}">${[...new Set(S[packSet].map(x=>x[k]).filter(Boolean))].map(v=>`<option>${esc(v)}</option>`).join('')}</datalist></div>`).join('')}
+   <div class="fld full"><label>Harga per tier (Rp) — kosongkan bila tidak tersedia</label><div class="price-grid">
+    ${KT.map((t,k)=>`<div><label style="font-weight:400;color:var(--tx3)">${t}</label><input id="k_t${k}" type="number" min="0" value="${r.t&&r.t[k]!=null?r.t[k]:''}"></div>`).join('')}
+   </div></div>
+  </div>
+  <div class="modal-acts"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveKomb(${i})">Simpan</button></div>`);
+}
+function saveKomb(i){
+ const keys=KOMB_KEYS[packSet],g=id=>document.getElementById(id).value.trim(),nv=v=>v===''?null:parseFloat(v);
+ const r={};keys.forEach(k=>r[k]=g('k_'+k));
+ r.t=KT.map((_,k)=>nv(g('k_t'+k)));
+ r.kombinasi=keys.map(k=>r[k]).filter(Boolean).join(' ');
+ if(i>=0)S[packSet][i]=Object.assign({},S[packSet][i],r);else S[packSet].push(r);
+ save();closeModal();render();toast('Kombinasi disimpan (lokal)');
+}
+function delKomb(i){if(confirm('Hapus kombinasi ini?')){S[packSet].splice(i,1);save();render();toast('Kombinasi dihapus (lokal)');}}
+
+/* ── CONFIG (kurs & berat) ── */
+function configUI(){
+ const c=S.config;
+ const cfgRows=[['USD_IDR','Kurs USD → IDR'],['AUD_IDR','Kurs AUD → IDR'],['WG_SOFT_POUCH','Berat Soft Pouch (g)'],['WG_HARDBOX','Berat Hard Box (g)'],['WG_SOFTBOX','Berat Soft Box (g)'],['WG_THANKYOU_CARD','Berat Thank You Card (g)']];
+ return `<div class="note">Kurs mata uang &amp; berat default packaging. Semua <b>tarif &amp; parameter pengiriman</b> kini ada di tab <b>Shipping</b>.</div>
+  <div class="card"><h3>Kurs &amp; berat packaging</h3>
+  <div class="f-grid">${cfgRows.map(a=>`<div class="fld"><label>${a[1]}</label><input id="c_${a[0]}" type="number" step="any" value="${c[a[0]]!=null?c[a[0]]:''}"></div>`).join('')}</div>
+  <div class="modal-acts" style="margin-top:14px"><button class="btn" onclick="saveCfg()">Simpan config</button></div></div>`;
+}
+function saveCfg(){Object.keys(S.config).forEach(k=>{const el=document.getElementById('c_'+k);if(el)S.config[k]=parseFloat(el.value)||0;});save();toast('Config disimpan (lokal)');}
+
+/* ── QUOTES LOG ── */
+function quotesUI(){
+ return `<div class="note">Versi sungguhan: halaman ini membaca tab <b>Quotes Summary</b> di Google Sheet — terisi otomatis setiap tim sales meng-Export PDF di Cost Estimator. Di prototype ini isinya contoh.</div>
+  <div class="card" style="padding:6px 14px 14px;overflow-x:auto">
+  <table><thead><tr><th>Waktu</th><th>Enquiry</th><th>Client</th><th>Total Produk</th><th>Shipping</th><th>Grand Total</th><th>Item</th></tr></thead><tbody>
+  ${S.quotes.map(q=>`<tr><td style="font-size:12px;color:var(--tx2)">${esc(q.ts)}</td><td><b>${esc(q.enq)}</b></td><td>${esc(q.client)}</td>
+   <td class="mono">${rp(q.total)}</td><td>${esc(q.ship)}<div style="font-size:11px;color:var(--tx3)">${rp(q.shipTotal)}</div></td>
+   <td class="mono"><b>${rp(q.grand)}</b></td><td>${q.items}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+/* ── SERVICE ── */
+function serviceUI(){
+ return importBar('service')+`<div class="search-row"><div style="flex:1"></div><button class="btn" onclick="editSvc(-1)">+ Tambah Service</button></div>
+  <div class="card" style="padding:6px 14px 14px;overflow-x:auto">
+  <table><thead><tr><th>Service</th><th class="mono">Fix / Qty</th><th class="mono">Tambahan / Pcs</th><th>Foto</th><th style="width:130px"></th></tr></thead><tbody>
+  ${S.services.map((s,i)=>`<tr><td><b>${esc(s.name)}</b></td><td class="mono">${s.fix!=null?rp(s.fix):'—'}</td><td class="mono">${s.perPc!=null?rp(s.perPc):'—'}</td>
+   <td>${s.photo?`<a href="${esc(s.photo)}" target="_blank" class="tag">lihat</a>`:'<span class="tag">—</span>'}</td>
+   <td><button class="btn ghost sm" onclick="editSvc(${i})">Edit</button> <button class="btn danger sm" onclick="delSvc(${i})">Hapus</button></td></tr>`).join('')}
+  </tbody></table><div style="font-size:11.5px;color:var(--tx3);margin-top:8px">${S.services.length} service · harga standar untuk ukuran maks 3×3 cm</div></div>`;
+}
+function editSvc(i){
+ const s=i>=0?S.services[i]:{name:'',fix:null,perPc:null,photo:''};
+ openModal(`<h3>${i>=0?'Edit':'Tambah'} Service</h3><div class="f-grid">
+  <div class="fld full"><label>Nama Service *</label><input id="s_name" value="${esc(s.name)}"></div>
+  <div class="fld"><label>Fix Price / Qty (Rp)</label><input id="s_fix" type="number" min="0" value="${s.fix!=null?s.fix:''}"></div>
+  <div class="fld"><label>Additional / Pcs (Rp)</label><input id="s_pp" type="number" min="0" value="${s.perPc!=null?s.perPc:''}"></div>
+  <div class="fld full"><label>Link Foto (URL Drive)</label><input id="s_photo" value="${esc(s.photo)}"></div>
+  </div><div class="modal-acts"><button class="btn ghost" onclick="closeModal()">Batal</button><button class="btn" onclick="saveSvc(${i})">Simpan</button></div>`);
+}
+function saveSvc(i){const g=id=>document.getElementById(id).value.trim(),nv=v=>v===''?null:parseFloat(v);
+ if(!g('s_name')){alert('Nama service wajib diisi.');return;}
+ const s={name:g('s_name'),fix:nv(g('s_fix')),perPc:nv(g('s_pp')),photo:g('s_photo')};
+ if(i>=0)S.services[i]=s;else S.services.push(s);save();closeModal();render();toast('Service disimpan (lokal)');}
+function delSvc(i){if(confirm('Hapus service "'+S.services[i].name+'"?')){S.services.splice(i,1);save();render();toast('Service dihapus (lokal)');}}
+
+/* ── SHIPPING ── */
+function shippingUI(){
+ const sh=S.shipping;
+ return importBar('shipping')
+  +`<div class="card"><h3>Carrier — tampil di estimator?</h3>
+   <div style="display:flex;gap:18px;flex-wrap:wrap">${sh.carriers.map((c,i)=>`<label class="chk"><input type="checkbox" ${c.show?'checked':''} onchange="S.shipping.carriers[${i}].show=this.checked;save()"> ${esc(c.name)}</label>`).join('')}</div>
+   <div style="font-size:11.5px;color:var(--tx3);margin-top:8px">Estimator hanya menampilkan carrier yang dicentang (+ Sea Freight). Sisanya tetap ada di mesin, tersembunyi.</div></div>
+  <div class="card"><h3>Tarif Indoshipping — per bracket kg (Rp/kg)</h3>
+   <table style="max-width:560px"><thead><tr><th>Bracket ≤ kg</th><th>Regular</th><th>Economy</th><th></th></tr></thead><tbody>
+   ${sh.tariffs.map((r,i)=>`<tr>
+    <td><input style="width:90px" class="mono" type="number" step="any" value="${r[0]}" onchange="S.shipping.tariffs[${i}][0]=parseFloat(this.value)||0;save()"></td>
+    <td><input style="width:120px" class="mono" type="number" value="${r[1]}" onchange="S.shipping.tariffs[${i}][1]=parseFloat(this.value)||0;save()"></td>
+    <td><input style="width:120px" class="mono" type="number" value="${r[2]}" onchange="S.shipping.tariffs[${i}][2]=parseFloat(this.value)||0;save()"></td>
+    <td><button class="btn danger sm" onclick="S.shipping.tariffs.splice(${i},1);save();render()">✕</button></td></tr>`).join('')}
+   </tbody></table>
+   <div class="modal-acts" style="justify-content:flex-start;margin-top:12px"><button class="btn ghost" onclick="S.shipping.tariffs.push([999,0,0]);save();render()">+ Tambah bracket</button></div></div>
+  <div class="card"><h3>Sea Freight LCL &amp; parameter perhitungan</h3>
+   <div class="f-grid">
+    <div class="fld"><label>Sea — USD per CBM</label><input type="number" step="any" value="${sh.sea.usdPerCbm}" onchange="S.shipping.sea.usdPerCbm=parseFloat(this.value)||0;save()"></div>
+    <div class="fld"><label>Sea — biaya tetap (USD)</label><input type="number" step="any" value="${sh.sea.fixedUsd}" onchange="S.shipping.sea.fixedUsd=parseFloat(this.value)||0;save()"></div>
+    <div class="fld"><label>Sea — transit</label><input value="${esc(sh.sea.transit)}" onchange="S.shipping.sea.transit=this.value;save()"></div>
+    <div class="fld"><label>Packing factor (1.10 = +10%)</label><input type="number" step="any" value="${sh.packingFactor}" onchange="S.shipping.packingFactor=parseFloat(this.value)||1;save()"></div>
+    <div class="fld"><label>Divisor volumetrik — Regular</label><input type="number" value="${sh.divRegular}" onchange="S.shipping.divRegular=parseFloat(this.value)||5000;save()"></div>
+    <div class="fld"><label>Divisor volumetrik — Economy</label><input type="number" value="${sh.divEconomy}" onchange="S.shipping.divEconomy=parseFloat(this.value)||6000;save()"></div>
+    <div class="fld"><label>Efisiensi isi karton (0.80)</label><input type="number" step="any" value="${sh.cartonUtil}" onchange="S.shipping.cartonUtil=parseFloat(this.value)||0.8;save()"></div>
+   </div></div>
+  <div class="card"><h3>Ukuran karton pengiriman (cm &amp; gram)</h3>
+   <table style="max-width:580px"><thead><tr><th>Ukuran</th><th>L</th><th>W</th><th>H</th><th>Berat karton (g)</th><th></th></tr></thead><tbody>
+   ${sh.boxes.map((b,i)=>`<tr>
+    <td><input style="width:70px" value="${esc(b.size)}" onchange="S.shipping.boxes[${i}].size=this.value;save()"></td>
+    <td><input style="width:60px" class="mono" type="number" value="${b.L}" onchange="S.shipping.boxes[${i}].L=parseFloat(this.value)||0;save()"></td>
+    <td><input style="width:60px" class="mono" type="number" value="${b.W}" onchange="S.shipping.boxes[${i}].W=parseFloat(this.value)||0;save()"></td>
+    <td><input style="width:60px" class="mono" type="number" value="${b.H}" onchange="S.shipping.boxes[${i}].H=parseFloat(this.value)||0;save()"></td>
+    <td><input style="width:90px" class="mono" type="number" value="${b.wg}" onchange="S.shipping.boxes[${i}].wg=parseFloat(this.value)||0;save()"></td>
+    <td><button class="btn danger sm" onclick="S.shipping.boxes.splice(${i},1);save();render()">✕</button></td></tr>`).join('')}
+   </tbody></table>
+   <div class="modal-acts" style="justify-content:flex-start;margin-top:12px"><button class="btn ghost" onclick="S.shipping.boxes.push({size:'',L:0,W:0,H:0,wg:0});save();render()">+ Tambah karton</button></div></div>`;
+}
+
+/* ── FOTO VARIAN ── */
+let fotoSet='collateral';
+function fotoUI(){
+ var items;
+ if(fotoSet==='collateral')items=S.collateral.map((c,i)=>({label:c.type+' · '+c.kind+': '+c.value,url:c.photo,i:i,kind:'collateral'}));
+ else items=S.services.map((s,i)=>({label:s.name,url:s.photo,i:i,kind:'service'}));
+ return `<div class="subtabs">
+   <div class="subtab ${fotoSet==='collateral'?'on':''}" onclick="fotoSet='collateral';render()">Packaging &amp; Card (${S.collateral.length})</div>
+   <div class="subtab ${fotoSet==='service'?'on':''}" onclick="fotoSet='service';render()">Service (${S.services.length})</div></div>
+  <div class="note">Foto per varian. Prototype: edit URL foto → thumbnail langsung berubah. Upload file langsung ke Google Drive menyusul di backend sungguhan.</div>
+  <div class="foto-grid">${items.map(it=>`<div class="foto-cell">
+   <div class="foto-thumb">${it.url?`<img loading="lazy" src="${thumbURL(it.url)}" onerror="this.style.opacity=.15">`:'<span style="color:var(--tx3);font-size:11px">tanpa foto</span>'}</div>
+   <div class="foto-lbl">${esc(it.label)}</div>
+   <input class="foto-url" value="${esc(it.url)}" placeholder="URL foto Drive…" onchange="setFotoUrl('${it.kind}',${it.i},this.value)"></div>`).join('')}</div>`;
+}
+function thumbURL(u){var m=(''+u).match(/\/file\/d\/([\w-]+)/)||(''+u).match(/id=([\w-]+)/);return m?('https://drive.google.com/thumbnail?id='+m[1]+'&sz=w200'):u;}
+function setFotoUrl(kind,i,v){if(kind==='collateral')S.collateral[i].photo=v;else S.services[i].photo=v;save();render();toast('URL foto diperbarui (lokal)');}
+
+/* ── IMPORT / EXPORT EXCEL (kalibrasi massal, pakai SheetJS) ── */
+function importBar(section){
+ return `<div class="card" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#eef2ff;border-color:#c7d2fe">
+  <div style="flex:1;min-width:220px;font-size:12.5px;color:#3730a3"><b>Kalibrasi massal (Excel)</b> — unduh template, ubah di Excel, lalu import untuk mengganti <b>semua</b> data ${sectionLabel(section)} sekaligus.</div>
+  <button class="btn ghost sm" onclick="dlTemplate('${section}')">⬇ Unduh template (.xlsx)</button>
+  <button class="btn sm" onclick="pickImport('${section}')">⬆ Import data (.xlsx)</button></div>`;
+}
+function sectionLabel(s){return s==='service'?'Service':s==='shipping'?'Tarif Shipping':'Packaging & Card';}
+function sheetsForSection(section){
+ if(section==='service')return {Service:[['name','fix','perPc','photo']].concat(S.services.map(s=>[s.name,s.fix,s.perPc,s.photo]))};
+ if(section==='shipping')return {Tariff:[['bracket_kg','regular','economy']].concat(S.shipping.tariffs.map(r=>[r[0],r[1],r[2]]))};
+ var out={};[['softpouch','Soft Pouch'],['hardbox','Hard Box'],['softbox','Soft Box'],['cards','Thank You Card']].forEach(function(a){
+  var key=a[0],name=a[1],keys=KOMB_KEYS[key];
+  out[name]=[keys.concat(KT)].concat(S[key].map(function(r){return keys.map(function(k){return r[k];}).concat((r.t||[]).map(function(x){return x==null?'':x;}));}));});
+ return out;
+}
+function dlTemplate(section){
+ if(!window.XLSX){alert('Library Excel belum termuat (butuh internet). Coba lagi sebentar.');return;}
+ var sheets=sheetsForSection(section),wb=XLSX.utils.book_new();
+ Object.keys(sheets).forEach(function(name){XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sheets[name]),name);});
+ XLSX.writeFile(wb,'rove_'+section+'_template.xlsx');
+ toast('Template diunduh — isi/ubah di Excel lalu Import.');
+}
+function pickImport(section){
+ if(!window.XLSX){alert('Library Excel belum termuat (butuh internet).');return;}
+ var inp=document.createElement('input');inp.type='file';inp.accept='.xlsx,.xls,.csv';
+ inp.onchange=function(){var f=inp.files[0];if(!f)return;var rd=new FileReader();
+  rd.onload=function(e){try{applyImport(section,XLSX.read(e.target.result,{type:'array'}));}catch(err){alert('Gagal membaca file: '+err.message);}};
+  rd.readAsArrayBuffer(f);};
+ inp.click();
+}
+function numOrNull(v){if(v===''||v==null)return null;var n=parseFloat((''+v).replace(/rp/i,'').replace(/[^\d.,-]/g,'').replace(',','.'));return isNaN(n)?null:n;}
+function applyImport(section,wb){
+ if(section==='service'){
+  var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
+  var data=rows.slice(1).filter(function(r){return r[0];}).map(function(r){return {name:''+r[0],fix:numOrNull(r[1]),perPc:numOrNull(r[2]),photo:r[3]?''+r[3]:''};});
+  if(!data.length){alert('File kosong / tidak ada baris.');return;}
+  if(!confirm('Ganti SEMUA '+S.services.length+' service dengan '+data.length+' service dari file ini?'))return;
+  S.services=data;
+ } else if(section==='shipping'){
+  var rows2=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
+  var data2=rows2.slice(1).filter(function(r){return r[0]!==''&&r[0]!=null;}).map(function(r){return [numOrNull(r[0])||0,numOrNull(r[1])||0,numOrNull(r[2])||0];});
+  if(!data2.length){alert('Tidak ada baris tarif.');return;}
+  if(!confirm('Ganti tabel tarif dengan '+data2.length+' bracket dari file?'))return;
+  S.shipping.tariffs=data2;
+ } else {
+  var map={'Soft Pouch':'softpouch','Hard Box':'hardbox','Soft Box':'softbox','Thank You Card':'cards'};
+  var staged={},applied=[];
+  wb.SheetNames.forEach(function(sn){var key=map[sn];if(!key)return;var keys=KOMB_KEYS[key];
+   var rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1});
+   var data=rows.slice(1).filter(function(r){return r.some(function(c){return c!==''&&c!=null;});}).map(function(r){
+    var o={};keys.forEach(function(k,ci){o[k]=r[ci]!=null?''+r[ci]:'';});
+    o.t=KT.map(function(_,ti){return numOrNull(r[keys.length+ti]);});
+    o.kombinasi=keys.map(function(k){return o[k];}).filter(Boolean).join(' ');return o;});
+   staged[key]=data;applied.push(sn+': '+data.length+' baris');});
+  if(!applied.length){alert('Tidak ada sheet cocok (Soft Pouch / Hard Box / Soft Box / Thank You Card).');return;}
+  if(!confirm('Ganti data Packaging & Card:\n'+applied.join('\n')+'\n\nLanjutkan?'))return;
+  Object.keys(staged).forEach(function(k){S[k]=staged[k];});
+ }
+ save();render();toast('Import selesai — data diganti (lokal)');
+}
+
+/* ── modal & toast ── */
+function openModal(html){document.getElementById('modalBox').innerHTML=html;document.getElementById('ovl').classList.add('show');}
+function closeModal(){document.getElementById('ovl').classList.remove('show');}
+document.getElementById('ovl').addEventListener('click',e=>{if(e.target.id==='ovl')closeModal();});
+let toastT=null;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
+</script>
+</body>
+</html>
