@@ -196,6 +196,7 @@ function applyServer(resp){
  S=freshState();
  if(resp.config){
   ['USD_IDR','AUD_IDR','WG_SOFT_POUCH','WG_HARDBOX','WG_SOFTBOX','WG_THANKYOU_CARD'].forEach(function(k){if(resp.config[k]!=null)S.config[k]=resp.config[k];});
+  if(resp.config.seriesList)S.config.seriesList=resp.config.seriesList;
   if(resp.config.shipping)S.shipping=Object.assign(JSON.parse(JSON.stringify(SHIP_DEF)),{tariffs:JSON.parse(JSON.stringify(TARIF_DEF))},resp.config.shipping);
  }
  save();
@@ -240,6 +241,7 @@ function resetAll(){
 const PAGES=[
  {id:'home',ic:'▦',label:'Ringkasan'},
  {id:'produk',ic:'▤',label:'Produk'},
+ {id:'series',ic:'❖',label:'Series'},
  {id:'pack',ic:'◫',label:'Packaging & Card'},
  {id:'service',ic:'✦',label:'Service'},
  {id:'shipping',ic:'⛴',label:'Shipping'},
@@ -255,6 +257,7 @@ function render(){
  const el=document.getElementById('page');
  if(page==='home')el.innerHTML=homeUI();
  else if(page==='produk')el.innerHTML=prodUI();
+ else if(page==='series')el.innerHTML=seriesUI();
  else if(page==='pack')el.innerHTML=packUI();
  else if(page==='service')el.innerHTML=serviceUI();
  else if(page==='shipping')el.innerHTML=shippingUI();
@@ -312,7 +315,7 @@ function editProd(i){
   <div class="f-grid">
    <div class="fld"><label>Nama Produk Rove HQ *</label><input id="f_hq" value="${esc(p.hq)}"></div>
    <div class="fld"><label>Nama Produk Rove AU</label><input id="f_au" value="${esc(p.au)}"></div>
-   <div class="fld"><label>Series</label><input id="f_series" list="dl_series" value="${esc(p.series)}"><datalist id="dl_series">${[...new Set(S.products.map(x=>x.series))].map(s=>`<option>${esc(s)}</option>`).join('')}</datalist></div>
+   <div class="fld"><label>Series</label><input id="f_series" list="dl_series" value="${esc(p.series)}"><datalist id="dl_series">${seriesNames().map(s=>`<option>${esc(s)}</option>`).join('')}</datalist></div>
    <div class="fld"><label>Main Material</label><input id="f_mat" value="${esc(p.material)}"></div>
    <div class="fld"><label>Ukuran Produk (cm)</label><input id="f_size" value="${esc(p.size)}" placeholder="mis. 10 x 17 x 1,5 cm"></div>
    <div class="fld"><label>Berat Produk (gram)</label><input id="f_wg" type="number" min="0" value="${p.weightG!=null?p.weightG:''}"></div>
@@ -381,6 +384,24 @@ function configUI(){
   <div class="modal-acts" style="margin-top:14px"><button class="btn" onclick="saveCfg()">Simpan config</button></div></div>`;
 }
 function saveCfg(){Object.keys(S.config).forEach(k=>{const el=document.getElementById('c_'+k);if(el)S.config[k]=parseFloat(el.value)||0;});save();toast('Config disimpan (lokal)');}
+
+/* ── SERIES ── */
+function seriesNames(){var set={},out=[];(S.config.seriesList||[]).forEach(function(s){s=(''+s).trim();if(s&&!set[s.toLowerCase()]){set[s.toLowerCase()]=1;out.push(s);}});S.products.forEach(function(p){var s=(''+(p.series||'')).trim();if(s&&!set[s.toLowerCase()]){set[s.toLowerCase()]=1;out.push(s);}});return out;}
+function seriesCount(name){return S.products.filter(function(p){return (p.series||'')===name;}).length;}
+function jsq(s){return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+function seriesUI(){
+ var names=seriesNames();
+ return `<div class="note">Kelola jenis <b>Series</b> produk. Tambah series baru (tersimpan walau belum ada produk), ganti nama (otomatis mengubah semua produk di series itu), atau hapus (bila kosong). Klik <b>☁ Publish ke Database</b> setelah selesai.</div>
+  <div class="card" style="padding:12px 14px">
+   <div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn sm" onclick="addSeries()">+ Tambah Series</button></div>
+   <table><thead><tr><th>Series</th><th style="text-align:right">Jumlah produk</th><th style="width:180px"></th></tr></thead><tbody>
+   ${names.length?names.map(function(s){var c=seriesCount(s);return `<tr><td style="font-weight:600;color:var(--green)">${esc(s)}</td><td style="text-align:right" class="mono">${c}</td><td style="text-align:right"><button class="btn ghost sm" onclick="renameSeries('${jsq(s)}')">Ganti nama</button> <button class="btn ghost sm" onclick="delSeries('${jsq(s)}')">Hapus</button></td></tr>`;}).join(''):`<tr><td colspan="3" style="padding:20px;text-align:center;color:var(--tx3)">Belum ada series. Klik "+ Tambah Series".</td></tr>`}
+   </tbody></table>
+  </div>`;
+}
+function addSeries(){var name=(prompt('Nama series baru:')||'').trim();if(!name)return;if(seriesNames().some(function(s){return s.toLowerCase()===name.toLowerCase();})){alert('Series "'+name+'" sudah ada.');return;}S.config.seriesList=(S.config.seriesList||[]).concat([name]);save();render();toast('Series "'+name+'" ditambahkan (lokal). Klik Publish untuk simpan.');}
+function renameSeries(old){var name=(prompt('Ganti nama series "'+old+'" menjadi:',old)||'').trim();if(!name||name===old)return;var dup=seriesNames().some(function(s){return s.toLowerCase()===name.toLowerCase()&&s.toLowerCase()!==old.toLowerCase();});if(dup&&!confirm('Series "'+name+'" sudah ada. Gabungkan "'+old+'" ke dalamnya?'))return;var n=0;S.products.forEach(function(p){if((p.series||'')===old){p.series=name;n++;}});S.config.seriesList=(S.config.seriesList||[]).map(function(s){return s===old?name:s;});var seen={};S.config.seriesList=S.config.seriesList.filter(function(s){s=(''+s).trim();if(!s||seen[s.toLowerCase()])return false;seen[s.toLowerCase()]=1;return true;});save();render();toast('Series "'+old+'" → "'+name+'" ('+n+' produk). Klik Publish.');}
+function delSeries(name){var c=seriesCount(name);if(c>0){alert('Tidak bisa hapus — masih dipakai '+c+' produk. Ubah/pindahkan produk itu ke series lain dulu (atau ganti namanya).');return;}if(!confirm('Hapus series "'+name+'"?'))return;S.config.seriesList=(S.config.seriesList||[]).filter(function(s){return s!==name;});save();render();toast('Series "'+name+'" dihapus (lokal). Klik Publish.');}
 
 /* ── QUOTES LOG ── */
 function quotesUI(){
